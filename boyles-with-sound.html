@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#090a0c" />
+<meta name="description" content="Interactive 3D Boyle's law simulation with adjustable gas volume, temperature, molecular motion and a live pressure-volume graph." />
+<title>Boyle's Law | 3D Physics Lab</title>
+<style>
+:root{
+  --bg:#090a0c;--panel:rgba(17,19,22,.88);--panel2:#1b1e23;--line:rgba(224,232,241,.16);
+  --text:#f1f3f6;--muted:#a5aab1;--blue:#168cf0;--blue2:#4ba6ff;--green:#75d88e;
+  --red:#f07874;--shadow:0 16px 42px rgba(0,0,0,.40)
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#090a0c;color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+body{position:relative;padding:16px;overflow-x:hidden;background:transparent}
+body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;background:radial-gradient(ellipse at 74% 4%,rgba(125,139,157,.20),transparent 29%),radial-gradient(ellipse at 14% 42%,rgba(50,57,66,.20),transparent 38%),linear-gradient(180deg,#17191c 0%,#101215 42%,#090a0c 100%)}
+body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:31vh;z-index:-1;pointer-events:none;background:linear-gradient(180deg,transparent 0%,rgba(155,164,174,.06) 34%,rgba(111,119,128,.15) 100%);border-top:1px solid rgba(224,230,238,.07)}
+button,input{font:inherit}button{cursor:pointer}
+.app{max-width:1420px;margin:0 auto}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:13px}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.brandmark{width:40px;height:40px;border-radius:11px;background:linear-gradient(145deg,#258eff,#124a9c);display:grid;place-items:center;box-shadow:0 7px 22px #168cf044;border:1px solid #91d8ff45;flex:none}
+.brandmark svg{width:23px;height:23px}
+.brand h1{font-size:clamp(15px,1.7vw,19px);letter-spacing:.015em;margin:0;font-weight:780}
+.brand p{margin:3px 0 0;color:#aeb5bd;font-size:10px;letter-spacing:.13em;text-transform:uppercase}
+.top-actions{display:flex;gap:7px;align-items:center}
+.pill,.icon-btn{border:1px solid var(--line);background:#171a1f;color:var(--text);border-radius:10px;padding:8px 11px;font-size:12px;font-weight:700;transition:.2s}
+.pill:hover,.icon-btn:hover{border-color:#438fff90;background:#202833}
+.lang-btn{min-width:82px;color:#77b9ff}
+.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin:8px 2px 13px}
+.eyebrow{color:#42a5ff;font-size:10px;letter-spacing:.19em;text-transform:uppercase;font-weight:850;margin-bottom:6px}
+.hero h2{font-size:clamp(24px,3.2vw,34px);line-height:1.08;letter-spacing:-.035em;margin:0}
+.hero p{margin:7px 0 0;color:#b2b7be;font-size:12px;max-width:720px;line-height:1.5}
+.status{display:inline-flex;align-items:center;gap:7px;padding:7px 10px;border-radius:100px;border:1px solid #79d99535;background:#79d9950d;color:#b1e8bd;font-size:10px;white-space:nowrap;font-weight:750}
+.status i{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+.layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,.85fr);gap:13px;align-items:start}
+.panel{background:linear-gradient(145deg,rgba(28,30,34,.93),rgba(13,15,18,.95));border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);overflow:hidden;backdrop-filter:blur(8px)}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);background:rgba(10,12,15,.35)}
+.panel-title{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+.panel-title .dot{width:7px;height:7px;border-radius:50%;background:var(--blue2);box-shadow:0 0 12px #54d9f4a6}
+.view-tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.small-btn{border:1px solid rgba(223,232,243,.18);background:#171c23;color:#c5d3df;padding:7px 9px;border-radius:8px;font-size:10px;font-weight:750;transition:.18s}
+.small-btn:hover{border-color:#398cff90;color:#fff;background:#202833}
+.small-btn.active{color:#83c1ff;border-color:#398cff75;background:#398cff16}
+.stage-wrap{position:relative;height:clamp(340px,34vw,420px);min-height:340px;overflow:hidden;background:radial-gradient(ellipse at 58% 25%,#343940 0%,#1b1e22 43%,#090a0c 100%)}
+.stage-wrap::before{content:"";position:absolute;left:0;right:0;top:0;height:58%;z-index:0;pointer-events:none;background:radial-gradient(ellipse at 72% 12%,rgba(199,210,225,.13),transparent 37%),linear-gradient(180deg,rgba(4,5,7,.34),transparent 85%)}
+.stage-wrap::after{content:"";position:absolute;left:0;right:0;bottom:0;height:25%;z-index:0;pointer-events:none;background:linear-gradient(180deg,rgba(8,9,11,0),rgba(141,149,158,.17) 55%,rgba(49,53,59,.43));border-top:1px solid rgba(218,226,235,.09)}
+#scene{position:relative;z-index:1;width:100%;height:100%;display:block;touch-action:none;cursor:grab;outline:none}
+#scene:active{cursor:grabbing}
+.stage-caption{position:absolute;z-index:3;left:12px;bottom:10px;color:#c0d3e2;font-size:9px;letter-spacing:.045em;pointer-events:none;background:rgba(7,10,14,.78);padding:6px 8px;border:1px solid #ffffff16;border-radius:7px;backdrop-filter:blur(8px)}
+.legend{position:absolute;z-index:3;right:11px;top:11px;display:flex;flex-direction:column;gap:6px;background:rgba(7,10,14,.78);border:1px solid #ffffff18;border-radius:9px;padding:8px 10px;backdrop-filter:blur(9px);font-size:9px;color:#d0dbe5}
+.legend span{display:flex;align-items:center;gap:7px}.key{width:6px;height:6px;border-radius:50%;display:inline-block}.key.gas{background:#56bfff;box-shadow:0 0 8px #398cff}.key.piston{background:#398cff}.key.wall{background:#aeb8c4}
+.camera-pad{position:absolute;z-index:4;left:11px;top:11px;width:126px;padding:8px;border:1px solid rgba(228,237,248,.17);border-radius:10px;background:rgba(7,10,14,.80);backdrop-filter:blur(10px);box-shadow:0 8px 25px #0005;display:none}
+.camera-pad.open{display:block}
+.camera-pad-title{font-size:9px;color:#c6d8e8;font-weight:800;letter-spacing:.09em;text-transform:uppercase;text-align:center;margin:0 0 6px}
+.camera-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.camera-key{height:27px;border-radius:6px;border:1px solid #ffffff19;background:#1c232c;color:#e3f0fb;font-size:14px;font-weight:800;display:grid;place-items:center;padding:0;user-select:none}
+.camera-key:hover{background:#1c4b7b;border-color:#4ba6ff}.camera-key:active{transform:scale(.96)}
+.camera-key.utility{font-size:10px;color:#9dcaff}
+.camera-key.blank{visibility:hidden}
+.camera-extra{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px}
+.model-footer{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line);background:linear-gradient(180deg,#171a1e,#101317)}
+.metric{padding:10px 12px;border-right:1px solid var(--line);min-width:0}.metric:last-child{border-right:0}
+.metric-label{font-size:9px;color:#aeb5bd;text-transform:uppercase;letter-spacing:.10em;font-weight:800}
+.metric-value{font-size:clamp(17px,2vw,22px);font-weight:850;letter-spacing:-.035em;margin-top:4px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.metric-value em{font-size:10px;font-style:normal;color:#aab6c2;font-weight:650;letter-spacing:0;margin-left:3px}
+.metric.pressure .metric-value{color:#63b1ff}.metric.volume .metric-value{color:#7bdb98}.metric:nth-child(3) .metric-value{color:#f0a174}.metric:nth-child(4) .metric-value{color:#e8edf3}
+.side{display:flex;flex-direction:column;gap:11px;min-width:0}
+.controls{padding:14px 15px}
+.section-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.section-heading h3{font-size:13px;margin:0;font-weight:850}.section-heading span{font-size:9px;color:#a7b0b9;letter-spacing:.1em;text-transform:uppercase}
+.control-block{margin-bottom:13px}.control-row{display:flex;justify-content:space-between;align-items:center;gap:9px;margin-bottom:7px}.control-row label{font-size:11px;color:#d0dbe5;font-weight:700}.control-value{color:#8fc4ff;font-size:12px;font-weight:850;font-variant-numeric:tabular-nums;white-space:nowrap}
+input[type=range]{width:100%;height:5px;appearance:none;border-radius:99px;background:linear-gradient(90deg,#168cf0,#68b6ff);outline:none;display:block;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:16px;height:16px;border-radius:50%;background:#f4fbff;border:3px solid #398cff;box-shadow:0 0 0 3px #398cff25;cursor:grab}
+input[type=range]::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:#f4fbff;border:3px solid #398cff;box-shadow:0 0 0 3px #398cff25;cursor:grab}
+.range-labels{display:flex;justify-content:space-between;color:#8295a7;font-size:9px;margin-top:6px}
+.control-note{font-size:9px;line-height:1.45;color:#96a4b2;margin-top:6px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:2px}
+.action-btn{border:1px solid #438eff80;background:linear-gradient(120deg,#1263bf,#2789ec);color:white;padding:9px 10px;border-radius:9px;font-size:11px;font-weight:850;box-shadow:0 6px 16px #176bd22a;transition:.15s}
+.action-btn.secondary{background:#20252c;border-color:var(--line);color:#e0e5eb;box-shadow:none}.action-btn:active{transform:translateY(1px)}.action-btn:disabled{opacity:.42;cursor:not-allowed;filter:grayscale(.3)}
+.preset-row{display:flex;gap:6px;margin-top:8px}.preset{flex:1;min-width:0;border:1px solid var(--line);background:#191e25;color:#c4ccd5;border-radius:8px;padding:7px 5px;font-size:9px;font-weight:750;white-space:nowrap}.preset:hover,.preset.active{border-color:#398cff80;color:#91c5ff;background:#398cff13}.preset:disabled{opacity:.4;cursor:not-allowed}
+.graph-panel{padding:12px 14px 10px}.graph-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px}.graph-top h3{margin:0;font-size:12px}.graph-top span{font-size:9px;color:#a5aeb8;letter-spacing:.08em}#chart{display:block;width:100%;height:150px}
+.graph-legend{display:flex;gap:12px;font-size:9px;color:#aebdcc;margin-top:1px}.graph-legend i{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;background:var(--blue2)}.graph-legend .point i{background:#9bd2ff}
+.equation-panel{padding:13px 14px}.equation-panel h3{font-size:12px;margin:0 0 9px}.equation{background:linear-gradient(145deg,#141a22,#10151b);border:1px solid #398cff45;border-radius:10px;padding:10px;text-align:center;font-size:clamp(19px,2.2vw,23px);font-weight:850;letter-spacing:.02em;color:#94c7ff}.equation-sub{font-size:10px;color:#a5b5c4;text-align:center;margin-top:7px;line-height:1.45}.formula-pair{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.formula{background:#1b2027;border-radius:8px;padding:8px;text-align:center;border:1px solid var(--line)}.formula b{display:block;font-size:14px;color:#9bcaff}.formula small{font-size:9px;color:#9caebe;display:block;margin-top:2px}
+.info{padding:12px 14px}.info h3{font-size:12px;margin:0 0 6px}.info p{font-size:10px;line-height:1.55;color:#aebdca;margin:0}.info strong{color:#e4f1fc}
+.footer-note{text-align:center;color:#82909e;font-size:9px;margin:12px 0 2px;line-height:1.5}
+.toast{position:fixed;left:50%;bottom:16px;transform:translate(-50%,20px);opacity:0;pointer-events:none;padding:9px 12px;background:#1c2737;border:1px solid #398cff77;color:#e4f5ff;border-radius:9px;font-size:11px;transition:.25s;z-index:100000}.toast.show{opacity:1;transform:translate(-50%,0)}
+/* Fullscreen for both native browsers and the CSS fallback. */
+.fullscreen .stage-wrap{height:calc(100vh - 40px);min-height:0}.fullscreen #scene{height:100%}
+.stage-wrap:fullscreen,.stage-wrap:-webkit-full-screen{width:100vw;height:100vh;min-height:100vh;border-radius:0;background:radial-gradient(ellipse at 56% 28%,#3a3f47 0%,#1c2026 42%,#090b0e 100%)}
+.stage-wrap:fullscreen #scene,.stage-wrap:-webkit-full-screen #scene{width:100%;height:100%;min-height:100%}
+.stage-wrap.fallback-fullscreen{position:fixed!important;inset:0!important;z-index:99999!important;width:100vw!important;height:100vh!important;height:100dvh!important;min-height:100vh!important;min-height:100dvh!important;border-radius:0!important;overflow:hidden!important;display:block!important;background:radial-gradient(ellipse at 56% 28%,#3a3f47 0%,#1c2026 42%,#090b0e 100%)!important}
+.stage-wrap.fallback-fullscreen #scene{display:block;width:100%!important;height:100%!important;min-height:0!important;touch-action:none}
+.stage-wrap.fallback-fullscreen .stage-caption{bottom:max(12px,env(safe-area-inset-bottom))}.stage-wrap.fallback-fullscreen .legend{top:max(12px,env(safe-area-inset-top))}
+.stage-wrap.fallback-fullscreen .camera-pad{top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left))}
+body.has-fallback-fullscreen{overflow:hidden!important;padding:0!important}
+.stage-exit-btn{display:none;position:absolute;z-index:6;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));padding:8px 11px;background:#111923ef;border-color:#67aaff99;color:#eaf4ff;box-shadow:0 5px 22px #0008;backdrop-filter:blur(9px)}
+.stage-wrap:fullscreen .stage-exit-btn,.stage-wrap:-webkit-full-screen .stage-exit-btn,.stage-wrap.fallback-fullscreen .stage-exit-btn{display:block}
+@media(max-width:1000px){body{padding:13px}.layout{grid-template-columns:minmax(0,1.35fr) minmax(280px,.9fr);gap:11px}.stage-wrap{height:390px;min-height:340px}.controls{padding:12px}.panel{border-radius:13px}}
+@media(max-width:760px){body{padding:10px}.topbar{margin-bottom:12px}.brandmark{width:37px;height:37px;border-radius:10px}.brand p{font-size:8px;letter-spacing:.1em}.top-actions{gap:5px}.pill,.icon-btn{padding:8px 9px;font-size:10px}.hero{align-items:flex-start;flex-direction:column;gap:8px;margin-bottom:11px}.hero p{font-size:11px}.status{font-size:9px}.layout{grid-template-columns:1fr;gap:10px}.stage-wrap{height:350px;min-height:320px}.panel{border-radius:13px}.panel-head{padding:10px 11px}.metric{padding:9px 8px}.metric-label{font-size:8px;letter-spacing:.06em}.metric-value{font-size:18px}.metric-value em{font-size:9px}.controls{padding:13px}.side{gap:10px}.graph-panel,.equation-panel,.info{padding:12px}.stage-caption{font-size:8px;left:8px;bottom:8px}.legend{right:8px;top:8px;padding:7px 8px;font-size:8px}.camera-pad{left:8px;top:8px}.camera-key{height:25px}.footer-note{margin-top:10px}}
+@media(max-width:420px){body{padding:8px}.brand h1{font-size:14px}.brand p{letter-spacing:.07em}.lang-btn{min-width:72px}.stage-wrap{height:330px;min-height:310px}.metric-value{font-size:16px}.metric{padding:8px 6px}.metric-label{font-size:7px}.view-tools .small-btn{padding:6px 7px;font-size:9px}.model-footer{grid-template-columns:repeat(4,minmax(0,1fr))}.preset{font-size:8px;padding:7px 3px}.camera-pad{width:118px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brandmark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l2.2-5 3.5 10 2.2-10 2.1 5H21"/><path d="M4 4h16M4 20h16" opacity=".35"/></svg></div>
+      <div><h1>PHYSICS LAB <span style="color:#54d9f4">/</span> 3D</h1><p>Advanced level · Interactive learning</p></div>
+    </div>
+    <div class="top-actions"><button class="pill lang-btn" id="langBtn" type="button">සිංහල</button><button class="icon-btn" id="resetTop" type="button" title="Reset simulation" aria-label="Reset simulation">↺</button></div>
+  </header>
+  <section class="hero">
+    <div><div class="eyebrow" data-i18n="eyebrow">THERMAL PHYSICS · GAS LAWS</div><h2 data-i18n="title">Boyle's Law</h2><p data-i18n="subtitle">Explore how gas pressure changes when its volume changes at constant temperature.</p></div>
+    <div class="status"><i></i><span data-i18n="status">ISOTHERMAL · TEMPERATURE CONSTANT</span></div>
+  </section>
+  <main class="layout">
+    <section class="panel visual-panel">
+      <div class="panel-head"><div class="panel-title"><span class="dot"></span><span data-i18n="model">3D EXPERIMENT MODEL</span></div><div class="view-tools"><button class="small-btn active" id="particlesBtn" type="button" data-i18n="particles">Particles: ON</button><button class="small-btn" id="cameraToggle" type="button" aria-expanded="false" data-i18n="cameraControls">View controls</button><button class="small-btn" id="fullBtn" type="button" data-i18n="fullscreen">Fullscreen</button></div></div>
+      <div class="stage-wrap" id="stageWrap">
+        <canvas id="scene" aria-label="Three dimensional Boyle's law gas chamber simulation"></canvas>
+        <button class="small-btn stage-exit-btn" id="fullExitBtn" type="button" aria-label="Exit fullscreen">Exit fullscreen</button>
+        <div class="camera-pad" id="cameraPad" aria-label="3D camera controls">
+          <div class="camera-pad-title" data-i18n="cameraControls">View controls</div>
+          <div class="camera-grid">
+            <button class="camera-key blank" type="button" tabindex="-1" aria-hidden="true">·</button>
+            <button class="camera-key" type="button" data-camera="up" aria-label="Rotate up" title="Rotate up">▲</button>
+            <button class="camera-key blank" type="button" tabindex="-1" aria-hidden="true">·</button>
+            <button class="camera-key" type="button" data-camera="left" aria-label="Rotate left" title="Rotate left">◀</button>
+            <button class="camera-key utility" type="button" data-camera="home" aria-label="Reset camera" title="Reset camera">⌂</button>
+            <button class="camera-key" type="button" data-camera="right" aria-label="Rotate right" title="Rotate right">▶</button>
+            <button class="camera-key blank" type="button" tabindex="-1" aria-hidden="true">·</button>
+            <button class="camera-key" type="button" data-camera="down" aria-label="Rotate down" title="Rotate down">▼</button>
+            <button class="camera-key blank" type="button" tabindex="-1" aria-hidden="true">·</button>
+          </div>
+          <div class="camera-extra"><button class="camera-key utility" type="button" data-camera="zoomout" aria-label="Zoom out" title="Zoom out">−</button><button class="camera-key utility" type="button" data-camera="zoomin" aria-label="Zoom in" title="Zoom in">＋</button><button class="camera-key utility" type="button" data-camera="home" aria-label="Reset view" title="Reset view">RESET</button></div>
+        </div>
+        <div class="legend"><span><i class="key gas"></i><b data-i18n="gasParticles">Gas particles</b></span><span><i class="key piston"></i><b data-i18n="piston">Movable piston</b></span><span><i class="key wall"></i><b data-i18n="chamber">Glass chamber</b></span></div>
+        <div class="stage-caption" data-i18n="dragHint">DRAG TO ROTATE · SCROLL TO ZOOM</div>
+      </div>
+      <div class="model-footer">
+        <div class="metric pressure"><div class="metric-label" data-i18n="pressure">Pressure</div><div class="metric-value"><span id="pressureValue">266.7</span><em>kPa</em></div></div>
+        <div class="metric volume"><div class="metric-label" data-i18n="volume">Volume</div><div class="metric-value"><span id="volumeValue">1.00</span><em>L</em></div></div>
+        <div class="metric"><div class="metric-label" data-i18n="temperature">Temperature</div><div class="metric-value"><span id="tempValue">800</span><em>K</em></div></div>
+        <div class="metric"><div class="metric-label" data-i18n="pvProduct">P × V</div><div class="metric-value"><span id="pvValue">266.7</span><em>kPa·L</em></div></div>
+      </div>
+    </section>
+    <aside class="side">
+      <section class="panel controls">
+        <div class="section-heading"><h3 data-i18n="controls">Experiment controls</h3><span data-i18n="live">LIVE INPUT</span></div>
+        <div class="control-block">
+          <div class="control-row"><label for="volumeSlider" data-i18n="changeVolume">Change gas volume</label><output class="control-value" id="volumeReadout">1.00 V₀</output></div>
+          <input id="volumeSlider" type="range" min="0.50" max="1.25" step="0.01" value="1.00" />
+          <div class="range-labels"><span>0.50 V₀</span><span>1.25 V₀</span></div>
+          <div class="control-note" data-i18n="volumeNote">Move the piston to compress or expand the gas.</div>
+        </div>
+        <div class="control-block">
+          <div class="control-row"><label for="tempSlider" data-i18n="temperatureControl">Temperature</label><output class="control-value" id="tempReadout">800 K</output></div>
+          <input id="tempSlider" type="range" min="100" max="800" step="10" value="800" />
+          <div class="range-labels"><span>100 K</span><span>800 K</span></div>
+          <div class="control-note" data-i18n="tempNote">Set a temperature, then keep it constant while changing volume to test Boyle's law.</div>
+          <div class="preset-row temp-presets"><button class="preset" type="button" data-temp="300" data-i18n="temp300">300 K · Boyle test</button><button class="preset active" type="button" data-temp="800" data-i18n="temp800">800 K · Default</button></div>
+        </div>
+        <div class="actions"><button class="action-btn" id="compressBtn" type="button" data-i18n="compress">Compress gas</button><button class="action-btn secondary" id="expandBtn" type="button" data-i18n="expand">Expand gas</button></div>
+        <div class="preset-row"><button class="preset" type="button" data-volume="0.5" data-i18n="halfVolume">½ Volume</button><button class="preset" type="button" data-volume="1" data-i18n="originalVolume">Original</button><button class="preset" type="button" data-volume="1.25" data-i18n="maxVolume">Max Volume</button></div>
+      </section>
+      <section class="panel graph-panel">
+        <div class="graph-top"><h3 data-i18n="graphTitle">Pressure vs Volume</h3><span data-i18n="graphSubtitle">LIVE P–V CURVE</span></div>
+        <canvas id="chart" width="600" height="300" aria-label="Pressure versus volume graph"></canvas>
+        <div class="graph-legend"><span><i></i><span data-i18n="boyleCurve">Boyle's law curve</span></span><span class="point"><i></i><span data-i18n="currentState">Current state</span></span></div>
+      </section>
+      <section class="panel equation-panel">
+        <h3 data-i18n="equationTitle">Boyle's law relationship</h3>
+        <div class="equation">P₁V₁ = P₂V₂</div>
+        <div class="equation-sub" data-i18n="equationSub">For a fixed amount of gas at constant temperature, pressure is inversely proportional to volume.</div>
+        <div class="formula-pair"><div class="formula"><b>P ∝ 1 / V</b><small data-i18n="inverse">Inverse relationship</small></div><div class="formula"><b>PV = constant</b><small data-i18n="constant">At constant temperature</small></div></div>
+      </section>
+      <section class="panel info"><h3 data-i18n="observeTitle">What to observe</h3><p data-i18n="observeText">Compress the gas: the same particles occupy a smaller space and pressure increases. Expand the gas: pressure decreases. At constant temperature, the product <strong>PV</strong> remains approximately constant.</p></section>
+    </aside>
+  </main>
+  <div class="footer-note" data-i18n="footer">Ideal-gas model for learning purposes · Rotate the 3D model by dragging · Not a laboratory measurement device</div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const translations={
+ en:{eyebrow:'THERMAL PHYSICS · GAS LAWS',title:"Boyle's Law",subtitle:'Explore how gas pressure changes when its volume changes at constant temperature.',status:'ISOTHERMAL · TEMPERATURE CONSTANT',model:'3D EXPERIMENT MODEL',particles:'Particles: ON',particlesOff:'Particles: OFF',fullscreen:'Fullscreen',cameraControls:'View controls',gasParticles:'Gas particles',piston:'Movable piston',chamber:'Glass chamber',dragHint:'DRAG TO ROTATE · SCROLL TO ZOOM · USE VIEW CONTROLS',pressure:'Pressure',volume:'Volume',temperature:'Temperature',pvProduct:'P × V',controls:'Experiment controls',live:'LIVE INPUT',changeVolume:'Change gas volume',volumeNote:'Move the piston to compress or expand the gas.',temperatureControl:'Temperature',tempNote:"Choose a temperature and keep it constant while changing volume to test Boyle's law. Molecular motion changes naturally with temperature.",compress:'Compress gas',expand:'Expand gas',halfVolume:'½ Volume',originalVolume:'Original',maxVolume:'Max Volume',temp300:'300 K · Boyle test',temp800:'800 K · Default',graphTitle:'Pressure vs Volume',graphSubtitle:'LIVE P–V CURVE',boyleCurve:"Boyle's law curve",currentState:'Current state',equationTitle:"Boyle's law relationship",equationSub:'For a fixed amount of gas at constant temperature, pressure is inversely proportional to volume.',inverse:'Inverse relationship',constant:'At constant temperature',observeTitle:'What to observe',observeText:'Compress the gas: the same particles occupy a smaller space and pressure increases. Expand the gas: pressure decreases. At constant temperature, the product <strong>PV</strong> remains approximately constant.',footer:'Ideal-gas model for learning purposes · Rotate the 3D model by dragging or using the view controls · Not a laboratory measurement device',reset:'Simulation reset',webgl:'3D graphics could not be started. Please use an updated browser with WebGL enabled.'},
+ si:{eyebrow:'තාප භෞතික විද්‍යාව · වායු නියම',title:'බොයිල් නියමය',subtitle:'නියත උෂ්ණත්වයකදී වායුවක පරිමාව වෙනස් වන විට පීඩනය වෙනස් වන ආකාරය අධ්‍යයනය කරන්න.',status:'සමතාප ක්‍රියාවලිය · උෂ්ණත්වය නියතයි',model:'ත්‍රිමාණ පරීක්ෂණ ආකෘතිය',particles:'අණු: ක්‍රියාත්මකයි',particlesOff:'අණු: අක්‍රියයි',fullscreen:'සම්පූර්ණ තිරය',cameraControls:'දර්ශන පාලක',gasParticles:'වායු අණු',piston:'චලනය වන පිස්ටනය',chamber:'වීදුරු කුටීරය',dragHint:'කරකැවීමට ඇදගෙන යන්න · විශාල කිරීමට අනුචලනය හෝ දර්ශන පාලක භාවිත කරන්න',pressure:'පීඩනය',volume:'පරිමාව',temperature:'උෂ්ණත්වය',pvProduct:'P × V',controls:'පරීක්ෂණ පාලක',live:'සජීවී දත්ත',changeVolume:'වායු පරිමාව වෙනස් කරන්න',volumeNote:'වායුව සම්පීඩනය කිරීමට හෝ ප්‍රසාරණය කිරීමට පිස්ටනය ගෙනයන්න.',temperatureControl:'උෂ්ණත්වය',tempNote:'උෂ්ණත්වයක් තෝරාගෙන පරිමාව වෙනස් කරන විට එය නියතව තබා බොයිල් නියමය පරීක්ෂා කරන්න. උෂ්ණත්වය අනුව අණු චලනය ස්වභාවිකව වෙනස් වේ.',compress:'වායුව සම්පීඩනය',expand:'වායුව ප්‍රසාරණය',halfVolume:'½ පරිමාව',originalVolume:'මුල් අගය',maxVolume:'උපරිම පරිමාව',temp300:'300 K · බොයිල් පරීක්ෂාව',temp800:'800 K · පෙරනිමි අගය',graphTitle:'පීඩනය හා පරිමාව',graphSubtitle:'සජීවී P–V වක්‍රය',boyleCurve:'බොයිල් නියමයේ වක්‍රය',currentState:'දැනට පවතින තත්ත්වය',equationTitle:'බොයිල් නියමයේ සම්බන්ධතාවය',equationSub:'නියත උෂ්ණත්වයකදී සහ නියත වායු ස්කන්ධයකදී පීඩනය පරිමාවට ප්‍රතිලෝම සමානුපාතික වේ.',inverse:'ප්‍රතිලෝම සමානුපාතිකතාව',constant:'නියත උෂ්ණත්වයේදී',observeTitle:'නිරීක්ෂණය කරන්න',observeText:'වායුව සම්පීඩනය කළ විට එම අණු අඩු ඉඩක පවතින නිසා පීඩනය වැඩි වේ. ප්‍රසාරණය කළ විට පීඩනය අඩු වේ. උෂ්ණත්වය නියත නම් <strong>PV</strong> ගුණිතය ආසන්න වශයෙන් නියතව පවතී.',footer:'අධ්‍යාපනික පරමාදර්ශී වායු ආකෘතියකි · 3D ආකෘතිය ඇදගෙන හෝ දර්ශන පාලක මඟින් කරකවන්න · සැබෑ පරීක්ෂණ මිනුම් උපකරණයක් නොවේ',reset:'අනුකරණය නැවත සකස් කළා',webgl:'ත්‍රිමාණ රූප ආරම්භ කළ නොහැක. WebGL පහසුකම සහිත නවීන අන්තර්ජාල ගවේෂකයක් භාවිත කරන්න.'}
+};
+let lang='en';
+const $=id=>document.getElementById(id);
+const setText=(id,value)=>{const el=$(id);if(el)el.textContent=value};
+
+let scene,camera,renderer,orbit,gasMesh,particlesVisible=true,particleData=[],pistonGroup,rod;
+let pistonX,wallX=-2.12,endX=2.08,initialLength=3.15,volumeRatio=1,tempK=800,animationOn=true;
+const particleCount=96,clock=new THREE.Clock();
+const initialCameraPosition=new THREE.Vector3(4.7,3.2,6.6),initialTarget=new THREE.Vector3(-.05,0,0);
+
+function applyLanguage(){
+ document.documentElement.lang=lang;
+ document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n,v=translations[lang][k];if(v!==undefined){if(k==='observeText')el.innerHTML=v;else el.textContent=v}});
+ $('langBtn').textContent=lang==='en'?'සිංහල':'English';
+ const sb=$('phyBoyleSound');if(sb){const on=sb.getAttribute('aria-pressed')==='true';sb.textContent=lang==='si'?(on?'🔊 ශබ්දය ක්‍රියාත්මකයි':'🔇 ශබ්දය අක්‍රියයි'):(on?'🔊 Sound on':'🔇 Sound off');}
+ try{parent.postMessage({type:'phy-language-change',language:lang},'*')}catch(_){}
+ $('particlesBtn').textContent=particlesVisible?translations[lang].particles:translations[lang].particlesOff;
+ $('fullExitBtn').textContent=lang==='si'?'සම්පූර්ණ තිරයෙන් ඉවත් වන්න':'Exit fullscreen';
+ const back=$('phy-library-back-button');if(back)back.textContent=lang==='si'?'← ප්‍රධාන පිටුව':'← Library';
+ $('fullExitBtn').setAttribute('aria-label',$('fullExitBtn').textContent);
+}
+function mat(color,roughness=.45,metalness=.15,extra={}){return new THREE.MeshStandardMaterial({color,roughness,metalness,...extra})}
+function makeCylinder(radius,height,material,segments=64){const m=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,height,segments,1,true),material);m.rotation.z=-Math.PI/2;return m}
+
+function init3D(){
+ scene=new THREE.Scene();scene.fog=new THREE.Fog(0x12151a,9,18);
+ camera=new THREE.PerspectiveCamera(42,canvasWidth()/canvasHeight(),.1,100);camera.position.copy(initialCameraPosition);
+ renderer=new THREE.WebGLRenderer({canvas:$('scene'),antialias:true,alpha:true});
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));renderer.setSize(canvasWidth(),canvasHeight(),false);
+ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.16;
+ orbit=new OrbitControls(camera,renderer.domElement);orbit.enableDamping=true;orbit.dampingFactor=.065;orbit.target.copy(initialTarget);orbit.minDistance=4.2;orbit.maxDistance=10.5;orbit.maxPolarAngle=Math.PI*.48;orbit.minPolarAngle=.22;orbit.enablePan=false;orbit.enableRotate=true;orbit.enableZoom=true;
+ scene.add(new THREE.HemisphereLight(0xe7efff,0x20252c,2.15));
+ const key=new THREE.DirectionalLight(0xffffff,3.2);key.position.set(1.5,5,4);key.castShadow=true;key.shadow.mapSize.set(1024,1024);scene.add(key);
+ const rim=new THREE.PointLight(0x398cff,38,9);rim.position.set(-2,1.3,-2.2);scene.add(rim);
+ const warm=new THREE.PointLight(0x9bbcff,15,8);warm.position.set(2.5,1.4,2.5);scene.add(warm);
+ const floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),mat(0x25282d,.38,.3));floor.rotation.x=-Math.PI/2;floor.position.y=-.88;floor.receiveShadow=true;scene.add(floor);
+ const grid=new THREE.GridHelper(18,36,0x59616c,0x39414b);grid.position.y=-.865;grid.material.transparent=true;grid.material.opacity=.13;scene.add(grid);
+ // Transparent glass chamber with metallic end rings.
+ const glassMaterial=new THREE.MeshPhysicalMaterial({color:0x9abfe8,metalness:.16,roughness:.1,transparent:true,opacity:.15,side:THREE.DoubleSide,depthWrite:false,clearcoat:1,clearcoatRoughness:.08});
+ const tube=makeCylinder(.68,endX-wallX,glassMaterial,96);tube.position.x=(wallX+endX)/2;scene.add(tube);
+ const rimMat=mat(0xb6c2cf,.22,.82),ringGeo=new THREE.TorusGeometry(.68,.035,12,80);
+ for(const x of [wallX,endX]){const ring=new THREE.Mesh(ringGeo,rimMat);ring.rotation.y=Math.PI/2;ring.position.x=x;ring.castShadow=true;scene.add(ring)}
+ const endCap=new THREE.Mesh(new THREE.CylinderGeometry(.625,.625,.12,64),mat(0x677382,.24,.72));endCap.rotation.z=-Math.PI/2;endCap.position.x=wallX+.015;endCap.castShadow=true;scene.add(endCap);
+ const capFace=new THREE.Mesh(new THREE.CylinderGeometry(.54,.54,.126,64),mat(0x12386c,.28,.6));capFace.rotation.z=-Math.PI/2;capFace.position.x=wallX+.02;scene.add(capFace);
+ const railMat=mat(0x536171,.28,.78);
+ for(const z of [-.49,.49]){const rail=new THREE.Mesh(new THREE.BoxGeometry(endX-wallX+.25,.085,.09),railMat);rail.position.set((wallX+endX)/2,-.73,z);rail.castShadow=true;scene.add(rail)}
+ for(const x of [wallX+.35,endX-.35]){const foot=new THREE.Mesh(new THREE.BoxGeometry(.28,.22,.78),mat(0x2b323c,.38,.7));foot.position.set(x,-.78,0);foot.castShadow=true;scene.add(foot)}
+ // Movable piston and its polished connecting rod.
+ pistonGroup=new THREE.Group();scene.add(pistonGroup);
+ const pistonDisk=new THREE.Mesh(new THREE.CylinderGeometry(.615,.615,.19,72),new THREE.MeshStandardMaterial({color:0x176fe0,metalness:.62,roughness:.24}));pistonDisk.rotation.z=-Math.PI/2;pistonDisk.castShadow=true;pistonGroup.add(pistonDisk);
+ const seal=new THREE.Mesh(new THREE.TorusGeometry(.59,.035,14,72),mat(0x111820,.2,.42));seal.rotation.y=Math.PI/2;seal.position.x=-.105;pistonGroup.add(seal);
+ const hub=new THREE.Mesh(new THREE.CylinderGeometry(.17,.17,.2,40),mat(0xc2d0df,.2,.86));hub.rotation.z=-Math.PI/2;hub.position.x=.17;pistonGroup.add(hub);
+ rod=new THREE.Mesh(new THREE.CylinderGeometry(.075,.075,1,32),mat(0xd7e0eb,.18,.9));rod.rotation.z=-Math.PI/2;scene.add(rod);
+ const handle=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,.13,48),mat(0x536984,.28,.72));handle.rotation.z=-Math.PI/2;handle.position.x=endX+.08;scene.add(handle);
+ const handleAccent=new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,.14,48),mat(0x5ca5ff,.18,.76));handleAccent.rotation.z=-Math.PI/2;handleAccent.position.x=endX+.16;scene.add(handleAccent);
+ for(let i=0;i<9;i++){const x=wallX+.42+i*.43;const mark=new THREE.Mesh(new THREE.BoxGeometry(.012,.045,.018),mat(0x9bb3c3,.4,.55));mark.position.set(x,-.82,.56);scene.add(mark)}
+ // Instanced gas molecules; each particle has its own velocity and wall collisions.
+ const geo=new THREE.SphereGeometry(.056,18,14),gasMat=new THREE.MeshPhysicalMaterial({color:0x56bfff,emissive:0x07315f,emissiveIntensity:.82,roughness:.24,metalness:.08,clearcoat:.6});
+ gasMesh=new THREE.InstancedMesh(geo,gasMat,particleCount);gasMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);gasMesh.castShadow=true;scene.add(gasMesh);
+ const glowMat=new THREE.MeshBasicMaterial({color:0x338dff,transparent:true,opacity:.07,side:THREE.DoubleSide});const glow=new THREE.Mesh(new THREE.CircleGeometry(.56,64),glowMat);glow.position.set(0,0,-.684);scene.add(glow);
+ pistonX=wallX+initialLength;
+ const dummy=new THREE.Object3D();
+ for(let i=0;i<particleCount;i++){const p={x:0,y:0,z:0,vx:0,vy:0,vz:0};randomizeParticle(p);particleData.push(p);dummy.position.set(p.x,p.y,p.z);dummy.scale.setScalar(1);dummy.updateMatrix();gasMesh.setMatrixAt(i,dummy.matrix)}
+ gasMesh.instanceMatrix.needsUpdate=true;pistonX=wallX+initialLength;updatePiston();updateParticlesBounds(true);
+ window.addEventListener('resize',resize3D);animate();
+}
+function canvasWidth(){return Math.max(1,$('scene')?.clientWidth||600)}
+function canvasHeight(){return Math.max(1,$('scene')?.clientHeight||380)}
+function randomizeParticle(p){
+ const len=Math.max(.4,pistonX-wallX-.42);p.x=wallX+.22+Math.random()*len;
+ const angle=Math.random()*Math.PI*2,rad=Math.sqrt(Math.random())*.49;p.y=Math.cos(angle)*rad;p.z=Math.sin(angle)*rad;
+ const speed=1.25+Math.random()*1.05,theta=Math.random()*Math.PI*2,u=Math.random()*2-1,flat=Math.sqrt(1-u*u);
+ p.vx=Math.cos(theta)*flat*speed;p.vy=Math.sin(theta)*flat*speed;p.vz=u*speed;
+}
+function updatePiston(){
+ if(!pistonGroup)return;pistonGroup.position.set(pistonX,0,0);
+ const start=pistonX+.21;rod.position.set((start+endX+.08)/2,0,0);rod.scale.y=Math.max(.05,endX+.08-start);
+}
+function updateParticlesBounds(reset=false){
+ if(!gasMesh)return;const right=pistonX-.18;
+ for(let i=0;i<particleData.length;i++){const p=particleData[i];if(reset||p.x>right||p.x<wallX+.14||p.y*p.y+p.z*p.z>.22){randomizeParticle(p);p.x=Math.min(p.x,right-.03)}}
+}
+function collideMolecules(){
+ const minD=.116,minD2=minD*minD;
+ for(let i=0;i<particleData.length;i++){
+  const a=particleData[i];
+  for(let j=i+1;j<particleData.length;j++){
+   const b=particleData[j],dx=a.x-b.x,dy=a.y-b.y,dz=a.z-b.z,d2=dx*dx+dy*dy+dz*dz;
+   if(d2>1e-7&&d2<minD2){
+    const d=Math.sqrt(d2),nx=dx/d,ny=dy/d,nz=dz/d,overlap=(minD-d)*.5;
+    a.x+=nx*overlap;a.y+=ny*overlap;a.z+=nz*overlap;b.x-=nx*overlap;b.y-=ny*overlap;b.z-=nz*overlap;
+    const rel=(a.vx-b.vx)*nx+(a.vy-b.vy)*ny+(a.vz-b.vz)*nz;
+    if(rel<0){const impulse=-rel;a.vx+=impulse*nx;a.vy+=impulse*ny;a.vz+=impulse*nz;b.vx-=impulse*nx;b.vy-=impulse*ny;b.vz-=impulse*nz}
+   }
+  }
+ }
+}
+function animate(){
+ requestAnimationFrame(animate);if(!renderer||!orbit)return;
+ const dt=Math.min(clock.getDelta(),.035);
+ if(animationOn&&particleData.length){
+  const tempScale=Math.sqrt(tempK/300),minX=wallX+.14,maxX=pistonX-.16,rMax=.535;
+  for(const p of particleData){
+   p.x+=p.vx*tempScale*dt;p.y+=p.vy*tempScale*dt;p.z+=p.vz*tempScale*dt;
+   if(p.x<minX){p.x=minX;p.vx=Math.abs(p.vx)}if(p.x>maxX){p.x=maxX;p.vx=-Math.abs(p.vx)}
+   const r=Math.hypot(p.y,p.z);if(r>rMax){const ny=p.y/r,nz=p.z/r;p.y=ny*rMax;p.z=nz*rMax;const vn=p.vy*ny+p.vz*nz;if(vn>0){p.vy-=2*vn*ny;p.vz-=2*vn*nz}}
+  }
+  collideMolecules();const d=new THREE.Object3D();
+  for(let i=0;i<particleData.length;i++){const p=particleData[i];d.position.set(p.x,p.y,p.z);d.scale.setScalar(particlesVisible?1:0);d.updateMatrix();gasMesh.setMatrixAt(i,d.matrix)}
+  gasMesh.instanceMatrix.needsUpdate=true;
+ }
+ orbit.update();renderer.render(scene,camera);
+}
+function resize3D(){
+ if(!renderer||!camera)return;const w=canvasWidth(),h=canvasHeight();renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();drawChart();
+}
+
+function getPressure(){return 100*(tempK/300)/volumeRatio}
+function updateReadouts(){
+ const p=getPressure(),v=volumeRatio;setText('pressureValue',p.toFixed(1));setText('volumeValue',v.toFixed(2));setText('tempValue',String(tempK));setText('pvValue',(p*v).toFixed(1));
+ setText('volumeReadout',v.toFixed(2)+' V₀');setText('tempReadout',tempK+' K');$('volumeSlider').value=v.toFixed(2);$('tempSlider').value=tempK;
+ document.querySelectorAll('[data-temp]').forEach(b=>b.classList.toggle('active',Number(b.dataset.temp)===tempK));
+ $('compressBtn').disabled=v<=.5+1e-8;$('expandBtn').disabled=v>=1.25-1e-8;drawChart();
+}
+function setVolume(v){
+ const next=Math.min(1.25,Math.max(.5,Number(v))),left=wallX+.14,oldRight=pistonX-.16,newPiston=wallX+initialLength*next,newRight=newPiston-.16;
+ const oldLength=Math.max(.1,oldRight-left),newLength=Math.max(.1,newRight-left);
+ for(const p of particleData){const fraction=Math.max(0,Math.min(1,(p.x-left)/oldLength));p.x=left+fraction*newLength}
+ volumeRatio=next;pistonX=newPiston;updatePiston();updateParticlesBounds(false);updateReadouts();
+}
+function setTemperature(t){tempK=Math.min(800,Math.max(100,Number(t)));$('tempSlider').value=tempK;document.querySelectorAll('[data-temp]').forEach(b=>b.classList.toggle('active',Number(b.dataset.temp)===tempK));updateReadouts()}
+function reset(){tempK=800;setVolume(1);$('tempSlider').value=800;document.querySelectorAll('[data-temp]').forEach(b=>b.classList.toggle('active',Number(b.dataset.temp)===800));updateReadouts();showToast(translations[lang].reset)}
+function drawChart(){
+ const c=$('chart');if(!c)return;const ctx=c.getContext('2d'),W=c.width,H=c.height;ctx.clearRect(0,0,W,H);
+ const pad={l:49,r:17,t:13,b:37},x0=pad.l,y0=H-pad.b,x1=W-pad.r,y1=pad.t,xMin=.5,xMax=1.25;
+ const peak=100*(tempK/300)/xMin,yMax=Math.max(100,Math.ceil(peak/100)*100),tick=yMax<=300?50:100;
+ const X=v=>x0+(v-xMin)/(xMax-xMin)*(x1-x0),Y=p=>y0-(p/yMax)*(y0-y1);
+ ctx.strokeStyle='rgba(190,205,220,.16)';ctx.lineWidth=1;ctx.font='11px system-ui';ctx.fillStyle='#91a4b7';ctx.textAlign='right';
+ for(let p=0;p<=yMax;p+=tick){const y=Y(p);ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();ctx.fillText(String(p),x0-9,y+4)}
+ ctx.textAlign='center';for(let v=.5;v<=1.251;v+=.15){const x=X(v);ctx.beginPath();ctx.moveTo(x,y1);ctx.lineTo(x,y0);ctx.stroke();ctx.fillText(v.toFixed(2),x,y0+17)}
+ ctx.strokeStyle='#9badbd';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x0,y1);ctx.lineTo(x0,y0);ctx.lineTo(x1,y0);ctx.stroke();
+ ctx.fillStyle='#b8c7d4';ctx.font='11px system-ui';ctx.fillText(lang==='en'?'Volume (V₀)':'පරිමාව (V₀)',(x0+x1)/2,H-6);
+ ctx.save();ctx.translate(13,(y0+y1)/2);ctx.rotate(-Math.PI/2);ctx.fillText(lang==='en'?'Pressure (kPa)':'පීඩනය (kPa)',0,0);ctx.restore();
+ const factor=tempK/300;ctx.beginPath();ctx.strokeStyle='#399dff';ctx.lineWidth=3;
+ for(let i=0;i<=120;i++){const v=xMin+(xMax-xMin)*i/120,p=100*factor/v,x=X(v),y=Y(Math.min(yMax,p));if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)}ctx.stroke();
+ const cx=X(volumeRatio),cy=Y(Math.min(yMax,getPressure()));ctx.beginPath();ctx.arc(cx,cy,7,0,Math.PI*2);ctx.fillStyle='#8bcaff';ctx.fill();ctx.strokeStyle='#f1f8ff';ctx.lineWidth=2;ctx.stroke();ctx.beginPath();ctx.arc(cx,cy,13,0,Math.PI*2);ctx.strokeStyle='rgba(57,140,255,.3)';ctx.lineWidth=3;ctx.stroke();
+}
+let toastTimer;function showToast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),1900)}
+
+// Manual camera controls complement mouse/touch orbit and mouse-wheel zoom.
+function moveCamera(direction){
+ if(!camera||!orbit)return;
+ if(direction==='home'){camera.position.copy(initialCameraPosition);orbit.target.copy(initialTarget);orbit.update();return}
+ const offset=camera.position.clone().sub(orbit.target),spherical=new THREE.Spherical().setFromVector3(offset);
+ if(direction==='left')spherical.theta+=.19;
+ if(direction==='right')spherical.theta-=.19;
+ if(direction==='up')spherical.phi=Math.max(.23,spherical.phi-.14);
+ if(direction==='down')spherical.phi=Math.min(Math.PI*.48,spherical.phi+.14);
+ if(direction==='zoomin'||direction==='zoomout'){
+  const factor=direction==='zoomin'?.82:1.22;offset.multiplyScalar(factor);
+  const distance=THREE.MathUtils.clamp(offset.length(),orbit.minDistance,orbit.maxDistance);offset.setLength(distance);camera.position.copy(orbit.target).add(offset);orbit.update();return;
+ }
+ camera.position.copy(orbit.target).add(new THREE.Vector3().setFromSpherical(spherical));camera.lookAt(orbit.target);orbit.update();
+}
+$('cameraToggle').addEventListener('click',()=>{const open=$('cameraPad').classList.toggle('open');$('cameraToggle').classList.toggle('active',open);$('cameraToggle').setAttribute('aria-expanded',String(open))});
+document.querySelectorAll('[data-camera]').forEach(btn=>btn.addEventListener('click',()=>moveCamera(btn.dataset.camera)));
+$('volumeSlider').addEventListener('input',e=>setVolume(e.target.value));$('tempSlider').addEventListener('input',e=>setTemperature(e.target.value));
+document.querySelectorAll('[data-temp]').forEach(b=>b.addEventListener('click',()=>setTemperature(b.dataset.temp)));
+$('compressBtn').addEventListener('click',()=>setVolume(Math.max(.5,volumeRatio-.1)));$('expandBtn').addEventListener('click',()=>setVolume(Math.min(1.25,volumeRatio+.1)));
+document.querySelectorAll('[data-volume]').forEach(b=>b.addEventListener('click',()=>setVolume(b.dataset.volume)));
+$('resetTop').addEventListener('click',reset);
+$('langBtn').addEventListener('click',()=>{lang=lang==='en'?'si':'en';applyLanguage();drawChart();try{parent.postMessage({type:'phy-language-change',language:lang},'*')}catch(_){} });
+$('particlesBtn').addEventListener('click',()=>{particlesVisible=!particlesVisible;applyLanguage();$('particlesBtn').classList.toggle('active',particlesVisible)});
+
+const fullBtn=$('fullBtn'),fullExitBtn=$('fullExitBtn'),stageWrap=$('stageWrap'),appRoot=$('app');
+function isNativeFullscreen(){return !!(document.fullscreenElement||document.webkitFullscreenElement||document.msFullscreenElement)}
+function syncFullscreenLayout(){
+ const active=isNativeFullscreen()||stageWrap.classList.contains('fallback-fullscreen');appRoot.classList.toggle('fullscreen',active);
+ document.body.classList.toggle('has-fallback-fullscreen',stageWrap.classList.contains('fallback-fullscreen'));
+ fullBtn.setAttribute('aria-pressed',active?'true':'false');fullBtn.title=active?'Exit fullscreen':'Enter fullscreen';
+ setTimeout(resize3D,130);
+}
+async function toggleFullscreen(){
+ if(stageWrap.classList.contains('fallback-fullscreen')){stageWrap.classList.remove('fallback-fullscreen');syncFullscreenLayout();return}
+ if(isNativeFullscreen()){
+  const exit=document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen;
+  try{if(exit)await exit.call(document);else stageWrap.classList.add('fallback-fullscreen')}catch(err){stageWrap.classList.add('fallback-fullscreen')}
+  syncFullscreenLayout();return;
+ }
+ const request=stageWrap.requestFullscreen||stageWrap.webkitRequestFullscreen||stageWrap.msRequestFullscreen;
+ if(request){try{const result=request.call(stageWrap);if(result&&typeof result.then==='function')await result;syncFullscreenLayout();return}catch(err){/* CSS fullscreen fallback below */}}
+ stageWrap.classList.add('fallback-fullscreen');syncFullscreenLayout();
+}
+fullBtn.addEventListener('click',toggleFullscreen);fullExitBtn.addEventListener('click',toggleFullscreen);
+document.addEventListener('fullscreenchange',syncFullscreenLayout);document.addEventListener('webkitfullscreenchange',syncFullscreenLayout);document.addEventListener('MSFullscreenChange',syncFullscreenLayout);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&stageWrap.classList.contains('fallback-fullscreen')){stageWrap.classList.remove('fallback-fullscreen');syncFullscreenLayout()}});
+window.addEventListener('resize',()=>setTimeout(resize3D,100));
+
+try{init3D();updateReadouts();applyLanguage()}catch(err){
+ console.error(err);const fallback=document.createElement('div');fallback.style.cssText='height:330px;display:grid;place-items:center;padding:25px;color:#d3e3ef;text-align:center;font-size:13px';fallback.textContent=translations[lang].webgl;$('scene').replaceWith(fallback)
+}
+</script>
+<button id="phyBoyleSound" type="button" aria-pressed="false" style="position:fixed;right:18px;top:18px;z-index:99999;border:1px solid #ffffff30;border-radius:10px;padding:9px 12px;background:#142438;color:#eaf5ff;font:700 12px system-ui;cursor:pointer">🔇 Sound off</button><script>(function(){const b=document.getElementById("phyBoyleSound");let ctx,osc,gain,on=false,raf=0;const label=()=>{const si=document.documentElement.lang==='si';b.textContent=si?(on?'🔊 ශබ්දය ක්‍රියාත්මකයි':'🔇 ශබ්දය අක්‍රියයි'):(on?'🔊 Sound on':'🔇 Sound off')};function update(){if(!on||!ctx)return;const v=document.getElementById('volumeSlider'),t=document.getElementById('tempSlider');const volume=v?Number(v.value):1,temp=t?Number(t.value):300;const f=Math.max(100,Math.min(900,680/Math.max(.5,volume)*Math.sqrt(Math.max(50,temp)/300)));osc.frequency.setTargetAtTime(f,ctx.currentTime,.12);gain.gain.setTargetAtTime(.022,ctx.currentTime,.15);raf=requestAnimationFrame(update)}label();b.addEventListener('click',async()=>{try{if(!ctx){ctx=new(window.AudioContext||window.webkitAudioContext)();osc=ctx.createOscillator();gain=ctx.createGain();osc.type='sine';gain.gain.value=0;osc.connect(gain).connect(ctx.destination);osc.start()}if(ctx.state==='suspended')await ctx.resume();on=!on;label();b.setAttribute('aria-pressed',String(on));if(on)update();else{cancelAnimationFrame(raf);gain.gain.setTargetAtTime(0,ctx.currentTime,.05)}}catch(e){b.textContent=document.documentElement.lang==='si'?'ශබ්දය ලබාගත නොහැක':'Sound unavailable'}})})();</script><button id="phy-library-back-button" type="button" style="position:fixed;left:14px;top:14px;z-index:100000;border:1px solid #ffffff30;border-radius:10px;padding:9px 12px;background:#142438;color:#eaf5ff;font:700 12px system-ui;cursor:pointer">← Library</button><script>document.getElementById('phy-library-back-button').textContent=document.documentElement.lang==='si'?'← ප්‍රධාන පිටුව':'← Library';document.getElementById('phy-library-back-button').addEventListener('click',()=>parent.postMessage({type:'phy-library-back'},'*'));</script></body>
+</html>
