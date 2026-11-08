@@ -66,3 +66,27 @@ Contact: gnsclasslibrary@gmail.com
 - Three.js භාවිත වන 3D models සඳහා අන්තර්ජාලය සහ WebGL අවශ්‍ය වේ. Sound browser user interaction එකකින් පසුව පමණක් සක්‍රිය වේ.
 
 - පෙර ක්‍රියාත්මක වූ package එක backups/PHY-Tools-GitHub-Ready-previous-working.zip තුළ තබා ඇත. එය නැවත deploy කිරීමට අවශ්‍ය වුවහොත් එය rollback backup එකක් ලෙස භාවිත කරන්න. අලුත් package එක සෘජුවම live main branch එකට දමන්න කලින් වෙනම test branch/repository එකක පරීක්ෂා කරන්න.
+
+
+අත්‍යවශ්‍ය JavaScript දෝෂ අලුත්වැඩියාව (2026-11-09)
+----------------------------------------------------
+පෙර පරීක්ෂණ ZIP එකේ index.html සහ tools.html ප්‍රධාන page script එකට අවශ්‍ය DOM lookup helper එක Boyle’s Law iframe template string එක ඇතුළත පමණක් තිබුණි. එම නිසා ප්‍රධාන page script එක ReferenceError එකකින් නතර වී category cards සහ simulation buttons ක්‍රියා නොකළේය. මෙම build එකේ එම helper එක ප්‍රධාන page scope එකට නිවැරදිව එක් කර index.html සහ tools.html දෙකම නැවත සකස් කර ඇත.
+
+මෙම build එකේ code-level smoke tests:
+- Main library boot: categories 10ක් සහ tools 130ක් render වීම.
+- Category URL: tools.html?unit=... ලෙස category page එකට යාම සහ අදාළ tool count පමණක් පෙන්වීම.
+- Generic simulator iframe: CSS, import map, tool-data JSON සහ js/simulator.js path නිවැරදිව ජනනය වීම.
+- Boyle’s Law iframe: මුල් 3D HTML template එක load source ලෙස යොදාගැනීම.
+- Catalog: tools 130ම අනන්‍ය IDs සහිතව තිබීම; සියලු calcType සහ visualType සඳහා engine mappings තිබීම.
+- Root inline script සහ JavaScript modules syntax පරීක්ෂණ pass වීම.
+
+සටහන: මෙය code-level සහ generated-document smoke test එකකි. 130ම browser/WebGL තුළ live rendering එකින් එක පරීක්ෂා කළ බවක් අදහස් නොවේ. 3D සඳහා internet සහ WebGL අවශ්‍ය වේ.
+
+
+අලුත්වැඩියා කළ නව පරීක්ෂණ පැකේජය — 2026-11-09
+-------------------------------------------------
+පෙර test ZIP එකේ ප්‍රධාන page JavaScript එකට අවශ්‍ය $() DOM helper එක Boyle's Law HTML template string එක ඇතුළත පමණක් තිබුණි. එය නිසා main script එක ReferenceError එකකින් නතර වී buttons ක්‍රියා නොකළේය. දැන් index.html සහ tools.html දෙකේම ප්‍රධාන script scope එකට helper එක එක් කර ඇත. මෙය upload කිරීමේදී ඔයා කළ වැරැද්දක් නොව, මගේ කලින් package එකේ bug එකකි.
+
+Fix පසු code-level පරීක්ෂණ: category 10ම සහ tools 130ම mocked-DOM test එකෙන් render විය; category URL 10ම අදාළ tool count පෙන්වීය; tool launch 130ම iframe HTML source generate විය; Boyle's Law dedicated HTML source generate විය; default calculation values 130ම finite විය; calcType 107ම සහ visualType 52ම engine branches තිබුණි; js/ JavaScript syntax checks pass විය.
+
+සීමාව: මෙම පරිසරය Chromium browser එක local site එකකට විවෘත කිරීමත් ERR_BLOCKED_BY_ADMINISTRATOR දෝෂයෙන් අවහිර කරන බැවින් actual browser/WebGL rendering 130ම live test කළ බව කියන්නේ නැත. ඒ නිසා මෙය පළමුව වෙනම test repository එකේ පරීක්ෂා කර පසුව පමණක් ප්‍රධාන site එකට ගෙන යන්න.
