@@ -1,5 +1,64 @@
-import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+// Load Three.js from independent ESM CDNs. This avoids a fragile import-map
+// dependency on OrbitControls and retries another provider if one CDN returns
+// an invalid response or is blocked on the visitor's network.
+async function loadThreeModule(){
+ const sources=[
+  'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js',
+  'https://unpkg.com/three@0.160.0/build/three.module.js',
+  'https://esm.sh/three@0.160.0'
+ ];
+ const failures=[];
+ for(const url of sources){
+  try{
+   const module=await import(url);
+   if(module && module.WebGLRenderer && module.Scene && module.PerspectiveCamera) return module;
+   throw new Error('The downloaded Three.js module did not expose the expected WebGL classes.');
+  }catch(error){failures.push(`${new URL(url).host}: ${error?.message||String(error)}`);}
+ }
+ throw new Error(`Three.js could not be loaded from the available CDNs. ${failures.join(' | ')}`);
+}
+const THREE=await loadThreeModule();
+
+// Small built-in orbit controller. Keeping camera interaction inside this
+// module removes the separate OrbitControls module as another CDN failure point.
+function createOrbitControls(camera,element){
+ const target=new THREE.Vector3();
+ let activePointer=null,lastX=0,lastY=0;
+ const spherical=()=>new THREE.Spherical().setFromVector3(camera.position.clone().sub(target));
+ const clampDistance=v=>THREE.MathUtils.clamp(v,controls.minDistance,controls.maxDistance);
+ const apply=sp=>{
+  sp.phi=THREE.MathUtils.clamp(sp.phi,controls.minPolarAngle,controls.maxPolarAngle);
+  sp.radius=clampDistance(sp.radius);
+  camera.position.setFromSpherical(sp).add(target);
+  camera.lookAt(target);
+ };
+ const onDown=e=>{
+  if(e.button!==0 && e.pointerType==='mouse') return;
+  activePointer=e.pointerId;lastX=e.clientX;lastY=e.clientY;
+  try{element.setPointerCapture(e.pointerId);}catch(_){}
+ };
+ const onMove=e=>{
+  if(activePointer!==e.pointerId)return;
+  const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;
+  const sp=spherical();sp.theta-=dx*.006;sp.phi+=dy*.006;apply(sp);
+ };
+ const onUp=e=>{if(activePointer===e.pointerId){activePointer=null;try{element.releasePointerCapture(e.pointerId);}catch(_){}}};
+ const onWheel=e=>{
+  e.preventDefault();const sp=spherical();sp.radius*=Math.exp(e.deltaY*.001);apply(sp);
+ };
+ element.addEventListener('pointerdown',onDown);
+ element.addEventListener('pointermove',onMove);
+ element.addEventListener('pointerup',onUp);
+ element.addEventListener('pointercancel',onUp);
+ element.addEventListener('wheel',onWheel,{passive:false});
+ const controls={
+  target,enableDamping:true,dampingFactor:.065,minPolarAngle:.12,maxPolarAngle:Math.PI*.48,
+  minDistance:.65,maxDistance:40,
+  update(){camera.lookAt(target);},
+  dispose(){element.removeEventListener('pointerdown',onDown);element.removeEventListener('pointermove',onMove);element.removeEventListener('pointerup',onUp);element.removeEventListener('pointercancel',onUp);element.removeEventListener('wheel',onWheel);}
+ };
+ return controls;
+}
 
 const mat=(color,roughness=.42,metalness=.28,extra={})=>new THREE.MeshStandardMaterial({color,roughness,metalness,...extra});
 const sphereGeo=new THREE.SphereGeometry(.11,18,14);
@@ -44,11 +103,7 @@ export function createPhysicsScene(canvas,meta,initialState={a:1,b:1}){
   renderer.toneMappingExposure=1.12;
   renderer.shadowMap.enabled=true;
   renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-  controls=new OrbitControls(camera,renderer.domElement);
-  controls.enableDamping=true;
-  controls.dampingFactor=.065;
-  controls.maxPolarAngle=Math.PI*.48;
-  controls.minPolarAngle=.12;
+  controls=createOrbitControls(camera,renderer.domElement);
   scene.add(new THREE.HemisphereLight(0xeaf3ff,0x252b34,2.2));
   const key=new THREE.DirectionalLight(0xffffff,2.8);
   key.position.set(3.5,6,4.5);key.castShadow=true;key.shadow.mapSize.set(1024,1024);scene.add(key);
@@ -338,7 +393,6 @@ function buildModel(kind,g,d,meta={}){
  }else if(kind==="circular-motion"){
   box(g,[0,-.62,0],[3.4,.12,1.1],0x26333e,.34,.6);d.circularPivot=ball(g,[0,.05,0],0xe4edf5,.12,.5);d.circularOrbit=ring(g,1.1,.025,0x6ebaff,[0,.05,0],[Math.PI/2,0,0]);d.circularMass=ball(g,[1.1,.05,0],0xf1bd68,.17,.25);d.circularRadius=line(g,[[0,.05,0],[1.1,.05,0]],0x74dca1,.85,.022);d.circularArrow=arrow(g,[0,.05,0],[0,.05,0],0x6fbfff);
  }
-}
 }
 function coilPoints(startY,height,length,radius){const pts=[];const n=150;for(let i=0;i<=n;i++){const t=i/n,x=-1.45+length*t,ang=t*2*Math.PI*11;pts.push([x,startY+Math.sin(ang)*radius,Math.cos(ang)*radius]);}return pts;}
 function updateModel(kind,d,s,t,dt,meta={}){

@@ -59,3 +59,12 @@ The workspace used to prepare this package cannot resolve external CDN hosts, so
 PHYSICS MODEL SCOPE
 -------------------
 The package contains 130 tool definitions. The tools reuse a set of topic-oriented 3D model families; this does not mean 130 separate bespoke models or all 130 physical models have been independently validated against the full A/L syllabus. The displayed equations/assumptions should still be reviewed topic by topic.
+
+
+PATCH 2026-11-10 (runtime module loading):
+- Removed the import-map + separate OrbitControls module dependency from the simulator runtime.
+- Three.js now loads through explicit dynamic ESM imports and retries jsDelivr, unpkg, and esm.sh.
+- Added a small in-project pointer/wheel orbit controller to avoid an additional CDN module dependency.
+- Kept the professional per-tool page layout, calculations, graph, controls, and tool catalogue.
+- Expanded runtime diagnostics with stack details to identify any remaining provider/browser issue.
+- Syntax checks and package integrity are performed before release. Live CDN/WebGL rendering is not claimed as tested in this offline environment.

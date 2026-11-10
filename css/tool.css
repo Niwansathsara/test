@@ -5,3 +5,11 @@
 @media(max-width:390px){.tool-wrap{width:calc(100% - 16px)}.tool-stage{height:360px;min-height:330px}.tool-metric{padding:8px 6px}.tool-metric strong{font-size:16px}.tool-view-actions .tool-small{padding:5px 6px}.camera-pad{width:118px}}
 
 @media(max-width:760px){.tool-wrap>.topbar{margin:0 -10px;padding:8px 10px}.tool-wrap>.topbar .brand-caption{display:block;font-size:7px;letter-spacing:.08em}.tool-wrap>.topbar .brand-logo{width:76px;min-width:76px}}
+
+
+/* 3D stage interaction and actionable runtime diagnostics */
+#scene{touch-action:none;cursor:grab}
+#scene:active{cursor:grabbing}
+.scene-error-stack{width:min(100%,720px);max-height:150px;overflow:auto;text-align:left;margin-top:4px;color:#a9c7df;font-size:11px}
+.scene-error-stack summary{cursor:pointer;font-weight:700;margin-bottom:6px}
+.scene-error-stack pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#080d13;border:1px solid #ffffff1c;border-radius:8px;padding:9px;color:#b9cde0}

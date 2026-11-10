@@ -11,3 +11,10 @@
 - Controls, graph, equation, observation, study note සහ Sinhala/English labels අඩංගුය.
 
 සීමාව: මෙම code preparation environment එකෙන් CDN access නැති නිසා user browser එකේ WebGL run එක තහවුරු කර නැත. Test repository එකේ සැබෑ browser test අවශ්‍යය.
+
+
+2026-11-10 - CDN/module loading fix:
+- Three.js module එක load කිරීමට jsDelivr, unpkg සහ esm.sh යන ස්වාධීන CDN තුන අනුපිළිවෙළින් උත්සාහ කරයි.
+- OrbitControls සඳහා වෙනම module import එක ඉවත් කර local pointer/wheel camera controls භාවිත කරයි.
+- 3D engine එක ආරම්භ නොවුණොත් stack trace සහ CDN දෝෂ පෙන්වයි.
+- Browser එකක සජීවී WebGL render පරීක්ෂාවක් කළ බවට මෙය සහතිකයක් නොවේ.

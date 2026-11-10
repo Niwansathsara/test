@@ -269,8 +269,15 @@ function showSceneError(error) {
   diagnostic.className = 'scene-error-detail';
   diagnostic.textContent = detail;
   const hint = document.createElement('small');
-  hint.textContent = lang === 'si' ? 'මෙම තාක්ෂණික දෝෂය සටහන් කරගන්න.' : 'Use this exact technical detail to diagnose the remaining issue.';
-  fallback.append(message, diagnostic, hint);
+  hint.textContent = lang === 'si' ? 'ත්‍රිමාණ එන්ජිම CDN මූලාශ්‍ර තුනකින් load කිරීමට උත්සාහ කරයි. අවසාන දෝෂය පහතින් ඇත.' : 'The 3D engine tries three independent CDN sources. The final diagnostic is shown below.';
+  const stack = document.createElement('details');
+  stack.className = 'scene-error-stack';
+  const summary = document.createElement('summary');
+  summary.textContent = lang === 'si' ? 'වැඩිදුර තාක්ෂණික විස්තර' : 'Technical details';
+  const pre = document.createElement('pre');
+  pre.textContent = String(error?.stack || detail).slice(0, 2400);
+  stack.append(summary, pre);
+  fallback.append(message, diagnostic, hint, stack);
   fallback.hidden = false;
   fallback.style.display = 'flex';
   fallback.style.flexDirection = 'column';
