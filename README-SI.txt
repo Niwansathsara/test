@@ -41,3 +41,12 @@ F. Boyle's Law — පරණ ක්‍රියාකාරී 3D simulation එ
 මෙම සකස් කිරීමේ පරිසරයෙන් external CDN host එකට සම්බන්ධ විය නොහැකි නිසා GitHub Pages live WebGL render එක browser එකකින් තහවුරු කර නැත. මෙහි JavaScript syntax, catalogue, model type mapping, page structure සහ ZIP integrity පමණක් ස්ථිතිකව පරීක්ෂා කර ඇත. සැබෑ browser test එක TEST repository එකේ කළ යුතුය.
 
 Tools 130ම catalogue එකේ ඇත. ඒවා topic-oriented shared 3D model families භාවිත කරයි; 130ම වෙන වෙනම bespoke 3D models නොවේ. සියලු භෞතික සූත්‍ර/උපකල්පනත් සම්පූර්ණ syllabus audit එකකින් තහවුරු කර නැත.
+
+
+PHY TOOLS – UNIVERSAL SIMULATOR UPDATE
+=====================================
+මෙම සංස්කරණයේ සෑම simulator පිටුවකටම පාලක, අඩු/මූලික/වැඩි පරීක්ෂණ අගයන්, A-/A+/B-/B+ buttons, Play/Pause, Reset, animation speed, camera controls, Sound On/Off, Fullscreen, live graph, graph axis switch සහ reading capture/clear ඇතුළත් කර ඇත.
+සෑම tool එකකටම එහිම සූත්‍රය, ආදාන, දෘශ්‍ය ආකෘතිය සහ පියවරෙන් පියවර භාවිත උපදෙස් English සහ Sinhala දෙකෙන් එක් කර ඇත.
+Boyle's Law original standalone page එක වෙනස් කර නැත.
+
+පරීක්ෂණයෙන් හඳුනාගත් නිවැරදි කිරීම්: gas-properties හි kPa × L ප්‍රතිඵලය J ලෙස නිවැරදි කිරීම; diode equation හි I0 = 1 pA ලෙස නිවැරදි කිරීම; physics animation engine එකේ input value 0 නම් එය 1 ලෙස වැරදිව සලකන bug එක නිවැරදි කිරීම.

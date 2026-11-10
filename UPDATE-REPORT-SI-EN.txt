@@ -1,0 +1,35 @@
+PHY TOOLS – UNIVERSAL SIMULATOR UPDATE
+======================================
+Scope
+- Kept the existing standalone Boyle's Law page and its simulation code unchanged.
+- Updated the common simulator template used by the remaining catalogue tools.
+- Added tool-specific bilingual explanation and steps for all 130 catalogue entries.
+
+Universal controls added
+- Low / Reference / High paired presets.
+- A−, A+, B− and B+ precision nudges.
+- Play / Pause and Reset.
+- 0.5x / 1x / 2x animation speed.
+- Sound On / Off, camera rotation/zoom/reset and Fullscreen.
+- A-vs-result / B-vs-result graph selection.
+- Record reading / remove individual reading / clear readings (up to 8).
+- Animated input/result meter bars.
+
+Learning information
+Each catalogue entry receives a formula-based explanation, a model-specific visual explanation, bilingual operation steps and a note distinguishing the numerical calculation from qualitative 3D animation.
+
+Reviewed corrections
+- gas-state: pressure (kPa) x volume (L) has numerical unit J; removed erroneous /1000 factor and set result unit to J.
+- diode-current: corrected saturation current from 1e-9 to 1e-12 A to match I0 = 1 pA.
+- physics-engine: zero is now treated as a valid input rather than replaced with 1.
+- elastic-collision: made the fixed initial velocities (+2 m/s and -1 m/s) explicit in the study note to match the implemented expression.
+
+Validation performed
+- JSON catalogue parsed and contains 130 tools.
+- All 130 tools have English and Sinhala how-it-works text and four operation steps.
+- JavaScript syntax checked as ES modules.
+- HTML references, control IDs and action hooks checked.
+- ZIP integrity checked.
+
+Limitations
+This is not a claim that every individual 3D model has been browser-tested. A real Chrome/WebGL run and subject-matter review of all 130 numerical models are still required before replacing the live website. Some outputs intentionally use idealised fixed assumptions recorded in the catalogue.

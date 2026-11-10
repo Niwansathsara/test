@@ -72,7 +72,7 @@ function ring(parent,r,tube,color,pos=[0,0,0],rot=[0,0,0]){const m=mesh(new THRE
 export function createPhysicsScene(canvas,meta,initialState={a:1,b:1}){
  let renderer,scene,camera,controls,raf=0,disposed=false,elapsed=0,last=performance.now(),observer=null;
  const group=new THREE.Group(),dynamic={};
- let state={...initialState,running:true};
+ let state={...initialState,running:true,speed:1};
  const stage=canvas.parentElement||canvas;
  const readStageSize=()=>{
   const rect=stage.getBoundingClientRect();
@@ -161,7 +161,7 @@ export function createPhysicsScene(canvas,meta,initialState={a:1,b:1}){
    raf=requestAnimationFrame(frame);
    try {
     const dt=Math.min(.04,(now-last)/1000||.016);last=now;
-    if(state.running)elapsed+=dt;
+    if(state.running)elapsed+=dt*(Number.isFinite(Number(state.speed))?THREE.MathUtils.clamp(Number(state.speed),.25,3):1);
     updateModel(visualType,dynamic,state,elapsed,dt,meta);
     controls.update();renderer.render(scene,camera);
    } catch(error) {
@@ -186,6 +186,8 @@ export function createPhysicsScene(canvas,meta,initialState={a:1,b:1}){
   }
   return {
    setState(next){state={...state,...next};},
+   setSpeed(speed){state.speed=THREE.MathUtils.clamp(Number(speed)||1,.25,3);},
+   reset(){elapsed=0;state.running=true;state.speed=1;return state.running;},
    toggle(){state.running=!state.running;return state.running;},rotate,zoom,
    resetView(){const distance=calcFitDistance(readStageSize().width,readStageSize().height);camera.position.copy(controls.target).addScaledVector(viewDirection,distance);controls.update();},
    dispose(){disposed=true;cancelAnimationFrame(raf);if(observer)observer.disconnect();else window.removeEventListener('resize',onResize);controls.dispose();renderer.dispose();}
@@ -396,7 +398,7 @@ function buildModel(kind,g,d,meta={}){
 }
 function coilPoints(startY,height,length,radius){const pts=[];const n=150;for(let i=0;i<=n;i++){const t=i/n,x=-1.45+length*t,ang=t*2*Math.PI*11;pts.push([x,startY+Math.sin(ang)*radius,Math.cos(ang)*radius]);}return pts;}
 function updateModel(kind,d,s,t,dt,meta={}){
- const a=Number(s.a)||1,b=Number(s.b)||1;
+ const av=Number(s.a),bv=Number(s.b);const a=Number.isFinite(av)?av:1,b=Number.isFinite(bv)?bv:1;
  if(kind==="measurement"){if(d.cursor)d.cursor.position.x=THREE.MathUtils.clamp(-1.8+(a%40)*.085,-1.8,1.8);}
  if(kind==="vector"){const x=THREE.MathUtils.clamp(a/5,-1.5,1.5),y=THREE.MathUtils.clamp(b/5,-1.3,1.3);if(d.v1){d.v1.setDirection(new THREE.Vector3(Math.sign(x)||1,0,0));d.v1.setLength(Math.abs(x),.16,.09)}if(d.v2){d.v2.position.set(x,0,0);d.v2.setDirection(new THREE.Vector3(0,Math.sign(y)||1,0));d.v2.setLength(Math.abs(y),.16,.09)}if(d.result){d.result.setDirection(new THREE.Vector3(x,y,0).normalize());d.result.setLength(Math.hypot(x,y),.16,.09)}}
  if(kind==="motion"||kind==="projectile"){const speed=THREE.MathUtils.clamp(a/10,.08,2.8);if(d.moving){const q=(t*speed)%1;if(kind==="projectile"){const x=-1.7+q*3.4,y=-.55+1.45*4*q*(1-q);d.moving.position.set(x,y,0);}else d.moving.position.x=-1.65+q*3.3;}}
