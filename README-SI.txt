@@ -1,92 +1,52 @@
-PHY TOOLS — GITHUB PAGES PACKAGE
-Created by G.Niwan Sathsara
-Contact: gnsclasslibrary@gmail.com
+PHY TOOLS — TEST REPOSITORY UPDATE (SINHALA)
+==============================================
 
-මෙම ZIP එකේ built-in simulation 130ම index.html එක තුළම ඇතුළත් කර ඇත. වෙන වෙනම tools/ folders 130ක් upload කිරීම අවශ්‍ය නැත.
+මෙම package එක TEST repository එක සඳහා පමණි. දැනට live/original PHY-tools repository එක වෙනස් නොකරන්න.
 
-1) GITHUB වෙත upload කිරීම
-- ZIP එක extract කරන්න.
-- Extract කළ folder එක ඇතුළේ ඇති සියලුම files/folders repository root එකට upload කරන්න.
-- index.html එක repository root එකේ තිබිය යුතුය. `PHY-Tools-GitHub-Ready/PHY-Tools-GitHub-Ready/index.html` වැනි nested folder එකක් තුළ නොතබන්න.
-- Repository root එකේ index.html, admin.html, tools.html, about.html, 404.html, css/, data/, js/, firebase/ සහ README-SI.txt පෙනිය යුතුය.
-- GitHub Settings > Pages > Build and deployment > Source: Deploy from a branch තෝරන්න.
-- Branch: main සහ Folder: /(root) තෝරා Save කරන්න.
-- මෙම ZIP එකේ .github/workflows folder එකක් නැත. ඒ නිසා Pages branch deployment එක සහ Actions workflow deployment එක එකවර ක්‍රියාත්මක නොවේ.
-- Website URL: https://niwansathsara.github.io/PHY-tools/
+මෙම version එකේ ප්‍රධාන වෙනස:
+- Category තෝරාගත් විට tools වෙනම tools.html page එකේ පෙන්වයි.
+- Simulation card එක click කළ විට iframe/srcdoc නොව සැබෑ වෙනම URL එකකට යයි:
+    simulate.html?id=<tool-id>
+- Boyle's Law සඳහා වෙනම boyles-with-sound.html page එක භාවිත කරයි.
+- Simulation page එකෙන් ආපසු එන විට කලින් තෝරාගත් category එකටම යයි.
+- 3D engine load නොවුණත් controls, calculations, graphs, language සහ sound UI ආරම්භ වීමට simulator.js වෙනස් කර ඇත.
+- Three.js + OrbitControls සඳහා browser internet connection අවශ්‍යයි. WebGL අවශ්‍ය browser වල 3D දර්ශනය ක්‍රියා කරයි.
 
-2) FIREBASE Auth සකස් කිරීම
-- Firebase Console හි phy-tools project එක විවෘත කරන්න.
-- Authentication > Sign-in method යටතේ Anonymous සහ Google යන providers දෙකම Enable කරන්න.
-- Authentication > Settings > Authorized domains යටතේ niwansathsara.github.io තිබේද බලන්න; නැත්නම් add කරන්න.
-- Google provider එකේ support email එක තෝරන්න.
+UPLOAD — TEST REPOSITORY ONLY
+-----------------------------
+1. ZIP එක Extract කරන්න.
+2. PHY-Tools-Dedicated-Simulator-Fix folder එක ඇතුළට යන්න.
+3. එහි ඇති සියලු files සහ folders test repository එකේ root එකට upload කරන්න.
+4. GitHub කියන විට files replace කරන්න. index.html, tools.html සහ js/ files අනිවාර්යයෙන් replace විය යුතුයි.
+5. Commit changes කරන්න.
+6. GitHub Pages settings: Deploy from a branch → main → /(root).
+7. Test URL: https://niwansathsara.github.io/PHY-tools-test/  (repository නම වෙනස් නම් URL එකට ඒ නම යොදන්න.)
 
-3) FIRESTORE සකස් කිරීම
-- Firestore Database එක create කරගන්න.
-- Firestore > Rules යටතේ මෙම ZIP එකේ firebase/firestore.rules හි අන්තර්ගතය paste කර Publish කරන්න.
-- Public visitors සඳහා visible login prompt එකක් නැත. Site එක Firebase Anonymous Authentication භාවිත කර visitor counters සහ admin-added units/tools read කරයි. Built-in tools Firebase නොමැතිවත් පෙන්විය යුතුය.
+TEST ORDER
+----------
+A. Home page → category card → category tools page.
+B. Tool 001 (SI Unit Converter) → simulate.html?id=si-unit-converter.
+C. Slider වෙනස් කරන්න → metric/result/graph වෙනස් විය යුතුයි.
+D. Play/Pause සහ Reset පරීක්ෂා කරන්න.
+E. Sound On/Off සහ English/Sinhala පරීක්ෂා කරන්න.
+F. View controls, rotate, zoom සහ fullscreen පරීක්ෂා කරන්න.
+G. Boyle's Law වෙත ගොස් slider, particle toggle, sound සහ fullscreen පරීක්ෂා කරන්න.
+H. Browser Console එකේ errors තිබේද පරීක්ෂා කරන්න.
 
-4) ADMIN ACCESS
-- https://niwansathsara.github.io/PHY-tools/admin.html විවෘත කරන්න.
-- Google sign-in කරන්නේ niwansathsara76@gmail.com verified account එකෙන් පමණි.
-- Admin page එකෙන් additional syllabus units හා standalone HTML simulations add/edit/delete කළ හැක.
-- Built-in 130 simulations ආරක්ෂා කර ඇත. Built-in unit එකක් edit කළ හැකි අතර Reset කිරීමෙන් original details නැවත ලැබේ.
-- Uploaded HTML එකක් 800 KB ට අඩු විය යුතුය. එය Firestore document එකක් ලෙස සුරැකේ.
+FILE STRUCTURE
+--------------
+index.html              Main categories page
+ tools.html             Selected syllabus unit page
+ simulate.html          Standalone simulator page
+ boyles-with-sound.html Separate Boyle's Law simulation
+ js/simulator-loader.js Loads selected tool data from data/catalog.json
+ js/simulator.js        Simulator controls, calculations and language
+ js/physics-engine.js   Three.js 3D scene engine
+ data/catalog.json      10 syllabus units + 130 simulation definitions
+ css/tool.css           Simulator page design
 
-5) ONLINE / TOTAL VISITORS
-- Public page එකට anonymous Firebase session එකක් භාවිතා කර unique visitor record එකක් ලියයි.
-- Online count එක last 90 seconds තුළ heartbeat ලබාදුන් browsers ගණන් කරයි; heartbeat එක තත්පර 30කට වරක් යාවත්කාලීන වේ.
-- Total visitors යනු Firestore siteVisitors collection එකේ browser IDs ගණනයි.
-
-6) වැදගත්
-- index.html එකේ built-in simulations 130ම සහ Boyle’s Law original 3D simulation එක embedded වේ. අනෙක් tools සඳහා 3D scene engine එක shared වේ; ඒවා එකිනෙක වෙනස් physics lesson model types අනුව පරාමිතීන් ලබා ගනී. සියලුම 130 tools විෂය කරුණු අනුව එකින් එක විද්‍යාත්මකව ස්වාධීනව validate කර ඇති බවක් මෙම package එකෙන් අදහස් නොවේ.
-- Three.js 3D graphics සඳහා Internet සම්බන්ධතාවය සහ WebGL-enabled browser එකක් අවශ්‍ය වේ.
-- Firebase web API key එක browser config එකේ පෙනීම සාමාන්‍ය දෙයකි. Firestore Rules තමයි database permissions ආරක්ෂා කරන්නේ. Service-account/private key කිසිවිටෙක browser එකට upload නොකරන්න.
-- Google/Firebase Authentication සහ Firestore providers/rules සකස් නොකළහොත් built-in 130 simulations තවමත් පෙන්විය යුතුය; නමුත් admin upload හා visitor stats වැඩ නොකරනු ඇත.
-
-
-අලුත් සංස්කරණය - UI සහ simulation fixes
-----------------------------------------
-1. index.html සහ tools.html යන දෙකම එකම application code එක භාවිත කරයි. tools.html?unit=... URL එකෙන් තෝරාගත් විෂය ඒකකයේ tools පමණක් වෙනම page එකක පෙන්වයි.
-2. 3D simulations සඳහා js/simulator.js සහ js/physics-engine.js භාවිත කරයි. CSS සඳහා css/tool.css අවශ්‍ය වේ. ඒවා delete නොකරන්න.
-3. සාමාන්‍ය simulations සඳහා Sound: On/Off පාලකය ඇත. පළමු වරට browser එකේ sound සක්‍රිය කරන විට පරිශීලකයා button එක ඔබන්න අවශ්‍යය.
-4. Boyle’s Law සඳහා දැනට තිබූ sound-enabled original simulation එක embed කර ඇත.
-5. Formula audit fixes: Terminal Velocity, Diode current, Rutherford scattering; අදාළ assumptions tool note එකේ සඳහන් වේ.
-6. මෙය idealised learning model එකකි. අත්හදා බැලීමේ උපකරණයකට සමාන මිනුමක් නොවේ.
-7. දැනට live site එක backup branch එකක/වෙනම repository එකක තබා, අලුත් build එක පරීක්ෂා කර පසුව පමණක් replace කරන්න.
-
-
-නව පරීක්ෂණ සංස්කරණයේ අමතර වෙනස්කම්
------------------------------------------
-- දැනට ක්‍රියාත්මක වන website එකේ files මකා නොදමන්න. මෙම ZIP එක පළමුව වෙනම test branch එකක හෝ test repository එකක deploy කරන්න.
-- ප්‍රධාන category එකක් තෝරාගත් විට tools.html?unit=... යන වෙනම පිටුවකට යයි; එම පිටුවේ තෝරාගත් ඒකකයේ tools පමණක් පෙන්වයි.
-- සෑම built-in simulation එකකම Sound: On/Off පාලකය ඇත. බ්‍රවුසරයේ ශබ්ද ප්‍රතිපත්තිය නිසා පළමු වරට ශබ්දය සක්‍රිය කිරීමට button එක පරිශීලකයා විසින් ඔබන්න අවශ්‍යය. මෙය පාලක/අගයන් වෙනස් කිරීමේ ශබ්ද ප්‍රතිචාරයකි; සියලුම පාඩම්වල භෞතික ශබ්දයේ පූර්ණ wave-synthesis ආකෘතියක් නොවේ.
-- Boyle’s Law සඳහා පෙර තිබූ 3D ගෑස් අණු ආකෘතිය ආරක්ෂා කර ඇත. මුල් standalone HTML එක backups/boyles-original-backup.html තුළද ඇත.
-- සාමාන්‍ය වචන සඳහා English/Sinhala පරිවර්තන යොදා ඇත. සම්මත සංකේත, SI ඒකක, විද්‍යාත්මක සූත්‍ර සහ තාක්ෂණික acronym ඒවායේ පිළිගත් ආකාරයෙන් තබා ඇත.
-- මෙම ආකෘති A/L මට්ටමේ අධ්‍යාපනික idealised simulations වේ. එක් එක් model එකේ study note හි ස්ථිර කොන්දේසි සහ සීමාවන් කියවන්න. සම්පූර්ණ 130ම සියලු browser/device මත සජීවීව පරීක්ෂා කළ බව අදහස් නොවේ.
-- Three.js භාවිත වන 3D models සඳහා අන්තර්ජාලය සහ WebGL අවශ්‍ය වේ. Sound browser user interaction එකකින් පසුව පමණක් සක්‍රිය වේ.
-
-- පෙර ක්‍රියාත්මක වූ package එක backups/PHY-Tools-GitHub-Ready-previous-working.zip තුළ තබා ඇත. එය නැවත deploy කිරීමට අවශ්‍ය වුවහොත් එය rollback backup එකක් ලෙස භාවිත කරන්න. අලුත් package එක සෘජුවම live main branch එකට දමන්න කලින් වෙනම test branch/repository එකක පරීක්ෂා කරන්න.
-
-
-අත්‍යවශ්‍ය JavaScript දෝෂ අලුත්වැඩියාව (2026-11-09)
-----------------------------------------------------
-පෙර පරීක්ෂණ ZIP එකේ index.html සහ tools.html ප්‍රධාන page script එකට අවශ්‍ය DOM lookup helper එක Boyle’s Law iframe template string එක ඇතුළත පමණක් තිබුණි. එම නිසා ප්‍රධාන page script එක ReferenceError එකකින් නතර වී category cards සහ simulation buttons ක්‍රියා නොකළේය. මෙම build එකේ එම helper එක ප්‍රධාන page scope එකට නිවැරදිව එක් කර index.html සහ tools.html දෙකම නැවත සකස් කර ඇත.
-
-මෙම build එකේ code-level smoke tests:
-- Main library boot: categories 10ක් සහ tools 130ක් render වීම.
-- Category URL: tools.html?unit=... ලෙස category page එකට යාම සහ අදාළ tool count පමණක් පෙන්වීම.
-- Generic simulator iframe: CSS, import map, tool-data JSON සහ js/simulator.js path නිවැරදිව ජනනය වීම.
-- Boyle’s Law iframe: මුල් 3D HTML template එක load source ලෙස යොදාගැනීම.
-- Catalog: tools 130ම අනන්‍ය IDs සහිතව තිබීම; සියලු calcType සහ visualType සඳහා engine mappings තිබීම.
-- Root inline script සහ JavaScript modules syntax පරීක්ෂණ pass වීම.
-
-සටහන: මෙය code-level සහ generated-document smoke test එකකි. 130ම browser/WebGL තුළ live rendering එකින් එක පරීක්ෂා කළ බවක් අදහස් නොවේ. 3D සඳහා internet සහ WebGL අවශ්‍ය වේ.
-
-
-අලුත්වැඩියා කළ නව පරීක්ෂණ පැකේජය — 2026-11-09
--------------------------------------------------
-පෙර test ZIP එකේ ප්‍රධාන page JavaScript එකට අවශ්‍ය $() DOM helper එක Boyle's Law HTML template string එක ඇතුළත පමණක් තිබුණි. එය නිසා main script එක ReferenceError එකකින් නතර වී buttons ක්‍රියා නොකළේය. දැන් index.html සහ tools.html දෙකේම ප්‍රධාන script scope එකට helper එක එක් කර ඇත. මෙය upload කිරීමේදී ඔයා කළ වැරැද්දක් නොව, මගේ කලින් package එකේ bug එකකි.
-
-Fix පසු code-level පරීක්ෂණ: category 10ම සහ tools 130ම mocked-DOM test එකෙන් render විය; category URL 10ම අදාළ tool count පෙන්වීය; tool launch 130ම iframe HTML source generate විය; Boyle's Law dedicated HTML source generate විය; default calculation values 130ම finite විය; calcType 107ම සහ visualType 52ම engine branches තිබුණි; js/ JavaScript syntax checks pass විය.
-
-සීමාව: මෙම පරිසරය Chromium browser එක local site එකකට විවෘත කිරීමත් ERR_BLOCKED_BY_ADMINISTRATOR දෝෂයෙන් අවහිර කරන බැවින් actual browser/WebGL rendering 130ම live test කළ බව කියන්නේ නැත. ඒ නිසා මෙය පළමුව වෙනම test repository එකේ පරීක්ෂා කර පසුව පමණක් ප්‍රධාන site එකට ගෙන යන්න.
+LIMITATIONS
+-----------
+- 130 tool definitions and their display/calculation setup are included. This is not a claim that every topic has a fully research-validated bespoke physical model. Some concepts share visual archetypes in the 3D engine.
+- Three.js is loaded from jsDelivr CDN. If that CDN is blocked by the user's network, the 3D model will show an error, but the controls/calculation interface remains usable.
+- Test the package on the TEST repository first. Do not deploy it to the original repository until the test passes.

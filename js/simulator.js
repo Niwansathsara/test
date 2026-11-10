@@ -1,5 +1,3 @@
-import { createPhysicsScene } from './physics-engine.js';
-
 const $ = id => document.getElementById(id);
 const data = JSON.parse($('tool-data').textContent);
 const C = { G: 6.67430e-11, k: 8.9875517923e9, e: 1.602176634e-19, h: 6.62607015e-34, c: 299792458, kB: 1.380649e-23, eps0: 8.8541878128e-12, mu0: 1.25663706212e-6, g: 9.80665 };
@@ -255,8 +253,18 @@ async function toggleFull(){
 setupControls();
 applyLanguage();
 $('toolTitle').textContent=lang==='si'?(data.titleSi||data.title):data.title;
-try { simulation=createPhysicsScene($('scene'),data,state); refresh(); }
-catch(error){ $('sceneFallback').hidden=false;$('sceneFallback').textContent=ui[lang].unavailable;console.error('PHY 3D error',error); }
+try {
+  const { createPhysicsScene } = await import('./physics-engine.js');
+  simulation = createPhysicsScene($('scene'), data, state);
+} catch(error) {
+  const fallback = $('sceneFallback');
+  fallback.hidden = false;
+  fallback.textContent = lang === 'si'
+    ? 'ත්‍රිමාණ ආකෘතිය ලබාගත නොහැක. නමුත් පාලක සහ ගණනය කිරීම් භාවිත කළ හැක. අන්තර්ජාල සම්බන්ධතාව සහ WebGL පරීක්ෂා කරන්න.'
+    : 'The 3D model could not load. The controls and calculations remain available. Check your internet connection and WebGL support.';
+  console.error('PHY 3D engine error:', error);
+}
+refresh();
 $('resetBtn').addEventListener('click',()=>{
   state={a:Number(D[0]),b:Number(D[1])};$('range-a').value=state.a;$('range-b').value=state.b;
   $('read-a').textContent=`${fmt(state.a)} ${data.aUnit||''}`;$('read-b').textContent=`${fmt(state.b)} ${data.bUnit||''}`;

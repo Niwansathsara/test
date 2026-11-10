@@ -1,24 +1,25 @@
-PHY TOOLS — PATCHED TEST PACKAGE (2026-11-09)
+PHY TOOLS — DEDICATED SIMULATOR FIX
 
-Reason the earlier test package failed:
-The main-page script used the $() DOM lookup helper, but the helper was only declared inside the embedded Boyle's Law HTML string. As a result, the main library script stopped with ReferenceError: $ is not defined before the category and simulation click handlers were attached. This was a bug in the package I prepared, not an upload mistake by the site owner.
+Root cause addressed:
+The previous package launched tools inside an iframe srcdoc. The generic page loaded module scripts and dependent assets from that iframe context. This has been removed for built-in tools.
 
-Fix applied:
-- Added the DOM lookup helper to the top-level page script in both index.html and tools.html.
-- Kept the Boyle's Law embedded simulator and existing assets intact.
-- Retained the 130-tool catalogue, category navigation, bilingual fields, sound controls and admin-related files.
+New flow:
+- categories: index.html -> tools.html?unit=...
+- generic tool: simulate.html?id=...&from=tools.html?unit=...
+- Boyle's Law: boyles-with-sound.html?from=...
 
-Checks completed after the fix:
-- Main library starts in a mocked DOM test and renders 10 syllabus categories and 130 tools.
-- All 10 category query URLs show the expected number of tools.
-- All 130 tool IDs generate simulator iframe content with the expected tool-data, stylesheet, import map and simulator module paths.
-- Boyle's Law generates its dedicated embedded HTML.
-- All 130 default calculator results are finite (no NaN/Infinity/undefined).
-- All 107 calcType values have calculation branches.
-- All 52 visualType values have explicit model-engine branches.
-- JavaScript syntax checks pass for all files in js/.
-- index.html and tools.html are identical and both contain the top-level helper.
-- Archive integrity test passes.
+Runtime resilience:
+- simulator UI/calculation module is initialized before the 3D engine is imported dynamically.
+- if the 3D dependency/WebGL fails, the controls and calculations still initialize and a clear message is displayed.
 
-Important test limitation:
-This environment blocks launching a browser against even a local test server (Chromium returns ERR_BLOCKED_BY_ADMINISTRATOR). Therefore, the actual Three.js/WebGL render has NOT been verified here in a real browser. The checks above verify page boot logic, category routing, tool launch document generation, mappings and default calculations—not 130 live WebGL scenes. Test this package in the separate test repository before replacing the working main site.
+Validation performed:
+- catalog JSON parses: 10 units, 130 tools
+- embedded catalog in index/tools matches data/catalog.json IDs
+- every tool has title/description and Sinhala translations for title, description, unit, labels, result, formula, observation
+- every catalog visualType has an engine buildModel branch
+- all JavaScript syntax checks
+- standalone page contains data-loader, import map, tool CSS, controls, graph and return URL handler
+- every tool id maps to a dedicated simulate.html URL except Boyle's Law which uses its own page
+- ZIP integrity check
+
+Not claimed: all 130 models were individually browser-run with real CDN/WebGL. This execution environment blocks local browser HTTP access and internet DNS, so live 3D browser verification cannot be honestly claimed here.

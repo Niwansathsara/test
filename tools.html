@@ -262,7 +262,18 @@ function genericSrcdoc(d){
  <script type="application/json" id="tool-data">${json}<\/script><script type="module" src="js/simulator.js"><\/script><script>document.getElementById('backLink').addEventListener('click',()=>parent.postMessage({type:'phy-library-back'},'*'));<\/script></body></html>`;
 }
 function selectUnitFallback(id){location.href='tools.html?unit='+encodeURIComponent(id)}
-function openTool(id){const d=TOOL_DATA[id];if(!d)return;const screen=$('simulationScreen'),frame=$('toolFrame');$('libraryScreen').hidden=true;screen.hidden=false;document.body.style.overflow='hidden';frame.srcdoc=id==='boyles-law'?BOYLE_HTML:genericSrcdoc(d);window.scrollTo(0,0)}
+function openTool(id){
+ const d=TOOL_DATA[id];
+ if(!d)return;
+ const currentFile=(location.pathname.split('/').pop()||'index.html');
+ const allowedFile=(currentFile==='tools.html'?'tools.html':'index.html');
+ const from=allowedFile+location.search;
+ if(id==='boyles-law'){
+  location.href='boyles-with-sound.html?from='+encodeURIComponent(from);
+  return;
+ }
+ location.href='simulate.html?id='+encodeURIComponent(id)+'&from='+encodeURIComponent(from);
+}
 window.openTool=openTool;
 function backHome(){const frame=$('toolFrame');frame.srcdoc='<!doctype html><html><body></body></html>';$('simulationScreen').hidden=true;$('libraryScreen').hidden=false;document.body.style.overflow='';window.scrollTo(0,0)}
 $('backToLibrary').addEventListener('click',backHome);window.addEventListener('message',e=>{if(e.source!==$('toolFrame').contentWindow)return;if(e.data?.type==='phy-library-back')backHome();if(e.data?.type==='phy-language-change'&&['en','si'].includes(e.data.language)){lang=e.data.language;try{localStorage.setItem('phy-lang',lang)}catch(_){}applyHomeLanguage();}});$('siteLangToggle').addEventListener('click',()=>{lang=lang==='en'?'si':'en';try{localStorage.setItem('phy-lang',lang)}catch(e){}applyHomeLanguage()});$('searchInput').addEventListener('input',renderTools);$('unitFilter').addEventListener('change',e=>{const id=e.target.value;if(id==='all')location.href='index.html';else location.href='tools.html?unit='+encodeURIComponent(id)});$('clearFilter').addEventListener('click',()=>{$('searchInput').value='';if(selectedUnit==='all'){$('unitFilter').value='all';renderUnits();renderTools()}else{renderTools()}});$('backToCategories').addEventListener('click',()=>location.href='index.html');$('aboutBtn').addEventListener('click',()=>$('aboutModal').hidden=false);document.addEventListener('click',e=>{if(e.target.closest('#aboutFooter')){e.preventDefault();$('aboutModal').hidden=false;}});$('closeAbout').addEventListener('click',()=>$('aboutModal').hidden=true);$('aboutModal').addEventListener('click',e=>{if(e.target.id==='aboutModal')$('aboutModal').hidden=true});if(location.hash==='#about')$('aboutModal').hidden=false;$('yearNow').textContent=new Date().getFullYear();try{applyHomeLanguage();$('unitFilter').value=selectedUnit}catch(err){console.error('PHY tools initialisation error:',err);$('toolCount').textContent='130';$('resultCount').textContent='130 TOOLS'}
