@@ -50,3 +50,8 @@ LIMITATIONS
 - 130 tool definitions and their display/calculation setup are included. This is not a claim that every topic has a fully research-validated bespoke physical model. Some concepts share visual archetypes in the 3D engine.
 - Three.js is loaded from jsDelivr CDN. If that CDN is blocked by the user's network, the 3D model will show an error, but the controls/calculation interface remains usable.
 - Test the package on the TEST repository first. Do not deploy it to the original repository until the test passes.
+
+
+3D MODEL VIEW / POSITION UPDATE
+-------------------------------
+මෙම update එකෙන් physics-engine.js සහ css/tool.css වෙනස් කර ඇත. එක් එක් 3D model එකේ ප්‍රමාණයට අනුව camera view එක auto-fit වේ. Mobile/fullscreen වල stage resize වීමත් හඳුනාගනී. Pendulum සහ Terminal Velocity model වල objects platform එක යටින් වැටීම සීමා කර ඇත. Fluid bubbles tank එක ඇතුළත පවතී. සවිස්තරය 3D-STAGE-FIX-SI.txt තුළ ඇත.

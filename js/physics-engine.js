@@ -11,23 +11,119 @@ function arrow(parent,from,to,color=0x58aaff){const a=new THREE.Vector3(...from)
 function ring(parent,r,tube,color,pos=[0,0,0],rot=[0,0,0]){const m=mesh(new THREE.TorusGeometry(r,tube,12,80),mat(color,.25,.65),parent,pos);m.rotation.set(...rot);return m;}
 
 export function createPhysicsScene(canvas,meta,initialState={a:1,b:1}){
- let renderer,scene,camera,controls,raf=0,disposed=false,elapsed=0,last=performance.now();const group=new THREE.Group();const dynamic={};let state={...initialState,running:true};
+ let renderer,scene,camera,controls,raf=0,disposed=false,elapsed=0,last=performance.now(),observer=null;
+ const group=new THREE.Group(),dynamic={};
+ let state={...initialState,running:true};
+ const stage=canvas.parentElement||canvas;
+ const readStageSize=()=>{
+  const rect=stage.getBoundingClientRect();
+  return {width:Math.max(1,Math.round(rect.width||canvas.clientWidth||640)),height:Math.max(1,Math.round(rect.height||canvas.clientHeight||360))};
+ };
  try{
-  scene=new THREE.Scene();scene.background=new THREE.Color(0x11151a);scene.fog=new THREE.Fog(0x11151a,10,22);
-  camera=new THREE.PerspectiveCamera(42,Math.max(1,canvas.clientWidth)/Math.max(1,canvas.clientHeight),.1,100);camera.position.set(4.6,3.1,6.4);
-  renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.45));renderer.setSize(canvas.clientWidth||640,canvas.clientHeight||360,false);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-  controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.06;controls.target.set(0,.05,0);controls.minDistance=3.8;controls.maxDistance=10;controls.maxPolarAngle=Math.PI*.48;controls.minPolarAngle=.18;
-  scene.add(new THREE.HemisphereLight(0xeaf3ff,0x252b34,2.25));const key=new THREE.DirectionalLight(0xffffff,3.0);key.position.set(3.5,5,4);key.castShadow=true;key.shadow.mapSize.set(1024,1024);scene.add(key);const blue=new THREE.PointLight(0x398cff,35,10);blue.position.set(-3,1.5,-2.2);scene.add(blue);const rim=new THREE.PointLight(0x9ecbff,18,9);rim.position.set(2.6,2,3);scene.add(rim);
-  const floor=mesh(new THREE.PlaneGeometry(200,200),mat(0x191d22,.48,.25),scene,[0,-.88,0]);floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;const grid=new THREE.GridHelper(16,32,0x505d6b,0x303943);grid.position.y=-.865;grid.material.transparent=true;grid.material.opacity=.14;scene.add(grid);
-  scene.add(group);const visualType=meta.visualType||meta.kind;buildModel(visualType,group,dynamic,meta);
-  const onResize=()=>{if(disposed)return;const w=Math.max(1,canvas.clientWidth),h=Math.max(1,canvas.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();};
-  const observer=new ResizeObserver(onResize);observer.observe(canvas);
-  function frame(now){if(disposed)return;raf=requestAnimationFrame(frame);const dt=Math.min(.045,(now-last)/1000||.016);last=now;if(state.running)elapsed+=dt;updateModel(visualType,dynamic,state,elapsed,dt,meta);controls.update();renderer.render(scene,camera);}
+  const initialSize=readStageSize();
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x11151a);
+  scene.fog=new THREE.Fog(0x11151a,12,28);
+  camera=new THREE.PerspectiveCamera(48,initialSize.width/initialSize.height,.05,160);
+  camera.up.set(0,1,0);
+  renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:"high-performance"});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+  renderer.setSize(initialSize.width,initialSize.height,false);
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.12;
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  controls=new OrbitControls(camera,renderer.domElement);
+  controls.enableDamping=true;
+  controls.dampingFactor=.065;
+  controls.maxPolarAngle=Math.PI*.48;
+  controls.minPolarAngle=.12;
+  scene.add(new THREE.HemisphereLight(0xeaf3ff,0x252b34,2.2));
+  const key=new THREE.DirectionalLight(0xffffff,2.8);
+  key.position.set(3.5,6,4.5);key.castShadow=true;key.shadow.mapSize.set(1024,1024);scene.add(key);
+  const blue=new THREE.PointLight(0x398cff,30,12);blue.position.set(-3,1.5,-2.2);scene.add(blue);
+  const rim=new THREE.PointLight(0x9ecbff,16,10);rim.position.set(2.6,2,3);scene.add(rim);
+  const floor=mesh(new THREE.PlaneGeometry(200,200),mat(0x191d22,.48,.25),scene,[0,-.88,0]);
+  floor.rotation.x=-Math.PI/2;floor.receiveShadow=true;
+  const grid=new THREE.GridHelper(16,32,0x505d6b,0x303943);
+  grid.position.y=-.865;grid.material.transparent=true;grid.material.opacity=.14;scene.add(grid);
+  scene.add(group);
+  const visualType=meta.visualType||meta.kind;
+  buildModel(visualType,group,dynamic,meta);
+  group.updateMatrixWorld(true);
+
+  // Centre and fit each model independently. The old fixed camera target put
+  // taller/off-centre models below the stage on some categories and screens.
+  const bounds=new THREE.Box3().setFromObject(group);
+  if(bounds.isEmpty()) bounds.setFromCenterAndSize(new THREE.Vector3(0,0,0),new THREE.Vector3(3.6,2.4,1.8));
+  bounds.expandByScalar(.12);
+  const sphere=bounds.getBoundingSphere(new THREE.Sphere());
+  const modelCenter=sphere.center.clone();
+  controls.target.copy(modelCenter);
+  const viewDirection=new THREE.Vector3(4.6,3.1,6.4).normalize();
+  const calcFitDistance=(width,height)=>{
+   const vFov=THREE.MathUtils.degToRad(camera.fov);
+   const hFov=2*Math.atan(Math.tan(vFov/2)*(width/Math.max(1,height)));
+   const limitingFov=Math.max(.18,Math.min(vFov,hFov));
+   return Math.max(3.6,(sphere.radius/Math.sin(limitingFov/2))*1.16);
+  };
+  const fitDistance=calcFitDistance(initialSize.width,initialSize.height);
+  camera.position.copy(modelCenter).addScaledVector(viewDirection,fitDistance);
+  camera.near=Math.max(.03,fitDistance/250);camera.far=Math.max(120,fitDistance*24);camera.updateProjectionMatrix();
+  controls.minDistance=Math.max(.65,Math.min(2.5,sphere.radius*.32));
+  controls.maxDistance=Math.max(18,fitDistance*3.2);
+  controls.update();
+
+  const onResize=()=>{
+   if(disposed)return;
+   const {width,height}=readStageSize();
+   renderer.setSize(width,height,false);
+   camera.aspect=width/height;
+   camera.updateProjectionMatrix();
+   const minFit=calcFitDistance(width,height);
+   const offset=camera.position.clone().sub(controls.target);
+   if(offset.length()<minFit){offset.setLength(minFit);camera.position.copy(controls.target).add(offset);}
+   controls.minDistance=Math.max(.65,Math.min(2.5,sphere.radius*.32));
+   controls.maxDistance=Math.max(18,minFit*3.2);
+   controls.update();
+  };
+  if(typeof ResizeObserver!=='undefined'){
+   observer=new ResizeObserver(onResize);observer.observe(stage);
+  }else window.addEventListener('resize',onResize);
+  function frame(now){
+   if(disposed)return;
+   raf=requestAnimationFrame(frame);
+   const dt=Math.min(.04,(now-last)/1000||.016);last=now;
+   if(state.running)elapsed+=dt;
+   updateModel(visualType,dynamic,state,elapsed,dt,meta);
+   controls.update();renderer.render(scene,camera);
+  }
   raf=requestAnimationFrame(frame);
-  function rotate(dx,dy){const off=camera.position.clone().sub(controls.target);const sph=new THREE.Spherical().setFromVector3(off);sph.theta-=dx;sph.phi=Math.max(.22,Math.min(Math.PI*.46,sph.phi+dy));off.setFromSpherical(sph);camera.position.copy(controls.target).add(off);camera.lookAt(controls.target);controls.update();}
-  function zoom(mult){const off=camera.position.clone().sub(controls.target);off.multiplyScalar(mult);const len=THREE.MathUtils.clamp(off.length(),controls.minDistance,controls.maxDistance);off.setLength(len);camera.position.copy(controls.target).add(off);controls.update();}
-  return {setState(next){state={...state,...next};},toggle(){state.running=!state.running;return state.running;},rotate,zoom,resetView(){camera.position.set(4.6,3.1,6.4);controls.target.set(0,.05,0);controls.update();},dispose(){disposed=true;cancelAnimationFrame(raf);observer.disconnect();controls.dispose();renderer.dispose();}};
- }catch(error){console.error("3D scene error",error);throw error;}
+  function rotate(dx,dy){
+   const off=camera.position.clone().sub(controls.target);
+   const sph=new THREE.Spherical().setFromVector3(off);
+   sph.theta-=dx;sph.phi=Math.max(.16,Math.min(Math.PI*.46,sph.phi+dy));
+   off.setFromSpherical(sph);camera.position.copy(controls.target).add(off);controls.update();
+  }
+  function zoom(mult){
+   const off=camera.position.clone().sub(controls.target);off.multiplyScalar(mult);
+   const len=THREE.MathUtils.clamp(off.length(),controls.minDistance,controls.maxDistance);
+   off.setLength(len);camera.position.copy(controls.target).add(off);controls.update();
+  }
+  return {
+   setState(next){state={...state,...next};},
+   toggle(){state.running=!state.running;return state.running;},rotate,zoom,
+   resetView(){const distance=calcFitDistance(readStageSize().width,readStageSize().height);camera.position.copy(controls.target).addScaledVector(viewDirection,distance);controls.update();},
+   dispose(){disposed=true;cancelAnimationFrame(raf);if(observer)observer.disconnect();else window.removeEventListener('resize',onResize);controls.dispose();renderer.dispose();}
+  };
+ }catch(error){
+  console.error("3D scene error",error);
+  if(renderer)renderer.dispose();
+  if(controls)controls.dispose();
+  if(observer)observer.disconnect();
+  throw error;
+ }
 }
 
 function buildModel(kind,g,d,meta={}){
@@ -162,7 +258,7 @@ function buildModel(kind,g,d,meta={}){
  }else if(kind==="centre-mass"){
   box(g,[0,-.55,0],[3.6,.12,.72],0x394653,.3,.6);d.massLeft=ball(g,[-1.25,-.15,0],0x4c9fff,.26,.35);d.massRight=ball(g,[1.25,-.15,0],0xe78166,.26,.35);d.cmMarker=ball(g,[0,.32,0],0x83dfaa,.09,.2);d.cmLine=line(g,[[-1.25,.32,0],[1.25,.32,0]],0x9aafc2,.7,.012);d.cmPost=box(g,[0,-.1,0],[.025,.72,.025],0xaabaca,.3,.7);
  }else if(kind==="pendulum"){
-  box(g,[0,1.15,0],[1.5,.12,.65],0x647487,.25,.7);box(g,[0,.95,0],[.12,.38,.12],0x8192a4,.25,.7);d.pivot=ball(g,[0,.74,0],0xe7c56f,.09,.35);d.pendulumRod=mesh(new THREE.CylinderGeometry(.025,.025,1,12),mat(0xc6d2df,.28,.65),g,[0,.2,0]);d.pendulumBob=ball(g,[0,-.3,0],0x3197ec,.19,.4);d.pendulumLength=1;
+  box(g,[0,1.48,0],[1.5,.12,.65],0x647487,.25,.7);box(g,[0,1.20,0],[.12,.55,.12],0x8192a4,.25,.7);d.pivot=ball(g,[0,1.0,0],0xe7c56f,.09,.35);d.pendulumRod=mesh(new THREE.CylinderGeometry(.025,.025,1,12),mat(0xc6d2df,.28,.65),g,[0,.5,0]);d.pendulumBob=ball(g,[0,0,0],0x3197ec,.19,.4);d.pendulumLength=1;
  }else if(kind==="sound-intensity"){
   box(g,[0,-.6,0],[3.8,.12,1.1],0x293541,.35,.5);d.soundSource=ball(g,[-1.45,.2,0],0xffc36d,.18,.3);d.soundReceiver=ball(g,[.5,.15,0],0x72d89c,.14,.25);d.soundRings=[];for(let i=0;i<6;i++)d.soundRings.push({mesh:ring(g,.28+i*.16,.014,0x64bfff,[-1.45,.2,0],[Math.PI/2,0,0]),phase:i/6});d.soundArrow=arrow(g,[-1.2,-.15,0],[.65,-.15,0],0x83dca9);
  }else if(kind==="charged-particle"){
@@ -259,7 +355,7 @@ function updateModel(kind,d,s,t,dt,meta={}){
  if(kind==="circuit"){if(d.bulb){d.bulb.material.emissiveIntensity=THREE.MathUtils.clamp(a/12,.15,2.4);d.bulb.scale.setScalar(.9+Math.min(1,a/30)*.3);}}
  if(kind==="semiconductor"){if(d.bulb)d.bulb.material.emissiveIntensity=THREE.MathUtils.clamp(a/1.2,.15,1.8);}
  if(kind==="solids"){if(d.sample){d.sample.scale.y=THREE.MathUtils.clamp(1.0-a/900,.55,1.05);}}
- if(kind==="fluid"){if(d.water){d.water.scale.y=THREE.MathUtils.clamp(b/3,.35,1.6);d.water.position.y=-.74+(d.water.scale.y*.5);}for(const p of d.bubbles||[]){p.position.y+=dt*.22;if(p.position.y>.75)p.position.y=-.8;}}
+ if(kind==="fluid"){if(d.water){d.water.scale.y=THREE.MathUtils.clamp(b/3,.35,1.6);d.water.position.y=-.74+(d.water.scale.y*.5);}for(const p of d.bubbles||[]){p.position.y+=dt*.22;if(p.position.y>.75)p.position.y=-.48;}}
  if(kind==="atomic"||kind==="nuclear"){
   for(let i=0;i<3;i++){const r=.85+i*.4,angle=t*(.7+i*.23)+i*2.1,e=d[`electron${i}`];if(e)e.position.set(Math.cos(angle)*r,Math.sin(angle)*r*.55,Math.sin(angle)*r*.85);}
   if(d.decayType==='fission'){const q=(t%4)/4;if(d.fragmentA)d.fragmentA.position.set(-.45-q*1.1,.05+q*.22,0);if(d.fragmentB)d.fragmentB.position.set(.45+q*1.1,.05-q*.22,0);}
@@ -286,7 +382,7 @@ function updateModel(kind,d,s,t,dt,meta={}){
  if(kind==="photon"){if(d.electron){const q=(t%2)/2;d.electron.position.set(.2+q*1.45,.08+Math.sin(q*Math.PI)*.85,0);}}
  if(kind==="capacitor"){const v=THREE.MathUtils.clamp(Math.abs(a)/12,.2,2.5);(d.fieldArrows||[]).forEach(ar=>ar.setLength(v*.34,.1,.06));if(d.plateA)d.plateA.material.color.setHex(a>=0?0x6da6d8:0xd58e68);}
  if(kind==="centre-mass"){const total=Math.max(.01,a+b),x=-1.25+2.5*b/total;if(d.massLeft)d.massLeft.scale.setScalar(THREE.MathUtils.clamp(.16+Math.sqrt(Math.max(a,.01))*.045,.16,.38));if(d.massRight)d.massRight.scale.setScalar(THREE.MathUtils.clamp(.16+Math.sqrt(Math.max(b,.01))*.045,.16,.38));if(d.cmMarker)d.cmMarker.position.x=THREE.MathUtils.clamp(x,-1.15,1.15);}
- if(kind==="pendulum"){const length=THREE.MathUtils.clamp(a,.25,1.7),gval=THREE.MathUtils.clamp(b,.5,30),period=2*Math.PI*Math.sqrt(length/gval),angle=.42*Math.sin(2*Math.PI*t/Math.max(period,.1));const pivot=new THREE.Vector3(0,.74,0),bob=new THREE.Vector3(Math.sin(angle)*length,.74-Math.cos(angle)*length,0);if(d.pendulumBob)d.pendulumBob.position.copy(bob);if(d.pendulumRod){const v=bob.clone().sub(pivot);d.pendulumRod.position.copy(pivot.clone().add(bob).multiplyScalar(.5));d.pendulumRod.scale.y=v.length();d.pendulumRod.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize());}}
+ if(kind==="pendulum"){const length=THREE.MathUtils.clamp(a,.25,1.35),gval=THREE.MathUtils.clamp(b,.5,30),period=2*Math.PI*Math.sqrt(length/gval),angle=.42*Math.sin(2*Math.PI*t/Math.max(period,.1));const pivot=new THREE.Vector3(0,1.0,0),bob=new THREE.Vector3(Math.sin(angle)*length,1.0-Math.cos(angle)*length,0);if(d.pendulumBob)d.pendulumBob.position.copy(bob);if(d.pendulumRod){const v=bob.clone().sub(pivot);d.pendulumRod.position.copy(pivot.clone().add(bob).multiplyScalar(.5));d.pendulumRod.scale.y=v.length();d.pendulumRod.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize());}}
  if(kind==="sound-intensity"){const r=THREE.MathUtils.clamp(b*.055,.18,1.65);if(d.soundReceiver)d.soundReceiver.position.x=-1.45+r;if(d.soundArrow){d.soundArrow.position.set(-1.45+r*.5,-.15,0);d.soundArrow.scale.x=r/1.8;}for(const q of d.soundRings||[]){const phase=(t*.6+q.phase)%1,rad=.18+phase*1.45;q.mesh.scale.setScalar(rad/.28);q.mesh.position.x=-1.45;}}
  if(kind==="charged-particle"){const mass=Math.max(a,1e-30),B=Math.max(b,1e-5),radius=THREE.MathUtils.clamp((mass*1e6/(1.602176634e-19*B))*2.5,.25,1.45),angle=t*1.8;if(d.chargePath){d.chargePath.scale.setScalar(radius/.8);}if(d.chargeTrail)d.chargeTrail.scale.setScalar(radius/.8);if(d.chargeParticle)d.chargeParticle.position.set(radius*Math.cos(angle),.15+radius*Math.sin(angle),0);}
  if(kind==="generator"){const omega=THREE.MathUtils.clamp(a,0,500),turns=THREE.MathUtils.clamp(b,1,1000);if(d.generatorCoil)d.generatorCoil.rotation.y=t*omega*.08;if(d.generatorLamp)d.generatorLamp.material.emissiveIntensity=.08+Math.abs(Math.sin(t*omega*.08))*Math.min(2,turns/80);}
@@ -294,7 +390,7 @@ function updateModel(kind,d,s,t,dt,meta={}){
  if(kind==="rc-circuit"){const tau=Math.max(.03,a*b*.001),charge=1-Math.exp(-Math.max(0,t)/tau);(d.rcField||[]).forEach(ar=>ar.setLength(.03+charge*.3,.08,.045));if(d.rcCurrent)d.rcCurrent.position.x=-1.05+((t*1.2)%2.1);if(d.rcPlateA)d.rcPlateA.material.emissiveIntensity=charge*.35;}
  if(kind==="solid-expansion"){const delta=12e-6*Math.max(.1,a)*b,factor=THREE.MathUtils.clamp(1+delta/Math.max(.1,a),.985,1.015);if(d.expansionRod)d.expansionRod.scale.x=2.5*factor;if(d.expansionHeater)d.expansionHeater.material.emissiveIntensity=THREE.MathUtils.clamp(Math.abs(b)/100,.1,1.8);}
  if(kind==="thermal-conduction"){const intensity=THREE.MathUtils.clamp(Math.abs(a*b)/100,.1,2);if(d.thermalRod)d.thermalRod.material.color.setHSL(.56-intensity*.09,.35,.42);(d.heatParticles||[]).forEach((p,i)=>{p.position.x=-1.45+((t*.55+i*.17)%2.9);p.material.emissiveIntensity=.25+intensity*.3;});}
- if(kind==="terminal-fluid"){const r=a*1e-3,eta=Math.max(b,1e-7),vt=2*r*r*1000*9.80665/(9*eta),speed=THREE.MathUtils.clamp(vt/1.5,.08,1.15),tau=.75,dist=speed*(t-tau*(1-Math.exp(-t/tau))),y=1.35-Math.min(2.3,dist*.55);if(d.fallingSphere)d.fallingSphere.position.y=y;if(d.velocityArrow)d.velocityArrow.setLength(.15+speed*.55,.12,.07);}
+ if(kind==="terminal-fluid"){const r=a*1e-3,eta=Math.max(b,1e-7),vt=2*r*r*1000*9.80665/(9*eta),speed=THREE.MathUtils.clamp(vt/1.5,.08,1.15),tau=.75,dist=speed*(t-tau*(1-Math.exp(-t/tau))),y=Math.max(-.46,1.35-Math.min(1.81,dist*.55));if(d.fallingSphere)d.fallingSphere.position.y=y;if(d.velocityArrow)d.velocityArrow.setLength(.15+speed*.55,.12,.07);}
  if(kind==="stokes-drag"){const eta=THREE.MathUtils.clamp(a,.0001,10),r=THREE.MathUtils.clamp(b*1e-3,1e-8,2e-5),drag=6*Math.PI*eta*r*.01,norm=THREE.MathUtils.clamp(drag/1e-8,.12,1.25);if(d.stokesSphere){d.stokesSphere.scale.setScalar(.06+Math.sqrt(r/1e-5)*.055);d.stokesSphere.position.x=-.65+((t*.18)%1.3);}if(d.stokesArrow)d.stokesArrow.setLength(.15+norm*.75,.1,.06);(d.stokesStream||[]).forEach((l,i)=>{l.material.opacity=.18+norm*.42;});}
  if(kind==="scattering"){
   // Stable Rutherford-scattering path: an incoming alpha particle approaches
