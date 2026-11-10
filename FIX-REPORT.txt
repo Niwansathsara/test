@@ -1,25 +1,61 @@
-PHY TOOLS — DEDICATED SIMULATOR FIX
+PHY TOOLS — NOVEMBER 10 2026 TEST-REPOSITORY UPDATE
+==================================================
 
-Root cause addressed:
-The previous package launched tools inside an iframe srcdoc. The generic page loaded module scripts and dependent assets from that iframe context. This has been removed for built-in tools.
+This package is intended for the TEST repository only. Do not replace the live/original site until the test site has been checked in a real browser.
 
-New flow:
-- categories: index.html -> tools.html?unit=...
-- generic tool: simulate.html?id=...&from=tools.html?unit=...
-- Boyle's Law: boyles-with-sound.html?from=...
+WHAT WAS CORRECTED
+------------------
+1. Non-Boyle 3D WebGL setup
+   - The generic engine previously requested an opaque WebGL context and explicitly asked for a high-performance GPU. That differed from the working Boyle's Law renderer configuration.
+   - It now uses the same alpha-enabled, default GPU-selection approach as Boyle's Law.
+   - If antialiasing context creation fails, it retries with antialiasing disabled.
+   - The browser error panel now displays the actual error name and message instead of hiding it behind a generic warning. This gives a specific diagnostic if a browser or device still cannot create a WebGL context or load a module.
 
-Runtime resilience:
-- simulator UI/calculation module is initialized before the 3D engine is imported dynamically.
-- if the 3D dependency/WebGL fails, the controls and calculations still initialize and a clear message is displayed.
+2. Energy Forms and Changes model
+   - The catalogue labels this as a thermal/heat-energy experiment. It was incorrectly being rendered using the generic gas piston model.
+   - It now has a dedicated calorimeter/beaker model with visible water, heater, thermometer, molecules and heat-flow indicators. Mass and temperature-change inputs affect the visual model.
+   - Gas-law tools remain on the piston-and-particle model.
 
-Validation performed:
-- catalog JSON parses: 10 units, 130 tools
-- embedded catalog in index/tools matches data/catalog.json IDs
-- every tool has title/description and Sinhala translations for title, description, unit, labels, result, formula, observation
-- every catalog visualType has an engine buildModel branch
-- all JavaScript syntax checks
-- standalone page contains data-loader, import map, tool CSS, controls, graph and return URL handler
-- every tool id maps to a dedicated simulate.html URL except Boyle's Law which uses its own page
-- ZIP integrity check
+3. Simulator learning detail
+   - The page retains the equation, live graph, calculated result, two controls, pause/reset, camera controls, fullscreen, sound, observation notes and study note.
+   - Added a translated three-step "How to investigate" guide.
+   - English and Sinhala strings were added for that guide and the 3D error details.
 
-Not claimed: all 130 models were individually browser-run with real CDN/WebGL. This execution environment blocks local browser HTTP access and internet DNS, so live 3D browser verification cannot be honestly claimed here.
+4. PHY branding on pages
+   - Added/kept the PHY favicon on the home, category, simulator, admin, Boyle, About redirect and 404 pages.
+   - Made the main page, category page, simulator, admin and Boyle headers sticky so the PHY logo remains visible while scrolling.
+   - Added PHY TOOLS branding to Boyle's Law while leaving its inline 3D simulation module unchanged.
+
+FILES THAT CHANGED
+------------------
+- js/physics-engine.js
+- js/simulator.js
+- simulate.html
+- css/tool.css
+- index.html
+- tools.html
+- admin.html
+- boyles-with-sound.html
+- about.html
+- 404.html
+- README-SI.txt
+- FIX-REPORT.txt
+
+CHECKS PERFORMED HERE
+---------------------
+- JavaScript syntax checks for every file in js/.
+- Catalogue JSON parse, unique IDs, and category/tool counts.
+- All catalogue visual types have a corresponding model branch in the 3D engine.
+- The thermal visual branch is separate from the gas-law piston model.
+- The generic renderer configuration matches the working Boyle renderer options and has a low-cost retry.
+- Simulator error panel exposes the browser exception rather than only a generic message.
+- Required site pages contain a PHY wordmark/favicon; header sticky rules are present.
+- ZIP integrity check.
+
+IMPORTANT LIMITATION
+--------------------
+The workspace used to prepare this package cannot resolve external CDN hosts, so it cannot download Three.js or perform a real live WebGL browser test against GitHub Pages. The code changes above are checked statically, but successful rendering on the user's browser/device must still be confirmed on the TEST repository. If a 3D model still fails, the page now shows the exact browser error in the stage. Send that text or a screenshot for the next targeted fix.
+
+PHYSICS MODEL SCOPE
+-------------------
+The package contains 130 tool definitions. The tools reuse a set of topic-oriented 3D model families; this does not mean 130 separate bespoke models or all 130 physical models have been independently validated against the full A/L syllabus. The displayed equations/assumptions should still be reviewed topic by topic.

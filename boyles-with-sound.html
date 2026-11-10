@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="theme-color" content="#090a0c" />
 <meta name="description" content="Interactive 3D Boyle's law simulation with adjustable gas volume, temperature, molecular motion and a live pressure-volume graph." />
-<title>Boyle's Law | 3D Physics Lab</title>
+<title>Boyle's Law | PHY tools</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231b77d2'/%3E%3Ctext x='7' y='40' font-family='Arial' font-size='23' font-weight='bold' fill='white'%3EPHY%3C/text%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#090a0c;--panel:rgba(17,19,22,.88);--panel2:#1b1e23;--line:rgba(224,232,241,.16);
@@ -19,7 +19,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;ba
 body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:31vh;z-index:-1;pointer-events:none;background:linear-gradient(180deg,transparent 0%,rgba(155,164,174,.06) 34%,rgba(111,119,128,.15) 100%);border-top:1px solid rgba(224,230,238,.07)}
 button,input{font:inherit}button{cursor:pointer}
 .app{max-width:1420px;margin:0 auto}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:13px}
+.topbar{position:sticky;top:0;z-index:100;background:rgba(10,14,19,.94);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 -16px 13px;padding:8px 16px;border-bottom:1px solid #ffffff18}
 .brand{display:flex;align-items:center;gap:11px;min-width:0}
 .brandmark{width:40px;height:40px;border-radius:11px;background:linear-gradient(145deg,#258eff,#124a9c);display:grid;place-items:center;box-shadow:0 7px 22px #168cf044;border:1px solid #91d8ff45;flex:none}
 .brandmark svg{width:23px;height:23px}
@@ -98,7 +98,7 @@ body.has-fallback-fullscreen{overflow:hidden!important;padding:0!important}
 .stage-exit-btn{display:none;position:absolute;z-index:6;left:max(12px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));padding:8px 11px;background:#111923ef;border-color:#67aaff99;color:#eaf4ff;box-shadow:0 5px 22px #0008;backdrop-filter:blur(9px)}
 .stage-wrap:fullscreen .stage-exit-btn,.stage-wrap:-webkit-full-screen .stage-exit-btn,.stage-wrap.fallback-fullscreen .stage-exit-btn{display:block}
 @media(max-width:1000px){body{padding:13px}.layout{grid-template-columns:minmax(0,1.35fr) minmax(280px,.9fr);gap:11px}.stage-wrap{height:390px;min-height:340px}.controls{padding:12px}.panel{border-radius:13px}}
-@media(max-width:760px){body{padding:10px}.topbar{margin-bottom:12px}.brandmark{width:37px;height:37px;border-radius:10px}.brand p{font-size:8px;letter-spacing:.1em}.top-actions{gap:5px}.pill,.icon-btn{padding:8px 9px;font-size:10px}.hero{align-items:flex-start;flex-direction:column;gap:8px;margin-bottom:11px}.hero p{font-size:11px}.status{font-size:9px}.layout{grid-template-columns:1fr;gap:10px}.stage-wrap{height:350px;min-height:320px}.panel{border-radius:13px}.panel-head{padding:10px 11px}.metric{padding:9px 8px}.metric-label{font-size:8px;letter-spacing:.06em}.metric-value{font-size:18px}.metric-value em{font-size:9px}.controls{padding:13px}.side{gap:10px}.graph-panel,.equation-panel,.info{padding:12px}.stage-caption{font-size:8px;left:8px;bottom:8px}.legend{right:8px;top:8px;padding:7px 8px;font-size:8px}.camera-pad{left:8px;top:8px}.camera-key{height:25px}.footer-note{margin-top:10px}}
+@media(max-width:760px){body{padding:10px}.topbar{position:sticky;top:0;z-index:100;margin:0 -10px 12px;padding:8px 10px}.brandmark{width:37px;height:37px;border-radius:10px}.brand p{font-size:8px;letter-spacing:.1em}.top-actions{gap:5px}.pill,.icon-btn{padding:8px 9px;font-size:10px}.hero{align-items:flex-start;flex-direction:column;gap:8px;margin-bottom:11px}.hero p{font-size:11px}.status{font-size:9px}.layout{grid-template-columns:1fr;gap:10px}.stage-wrap{height:350px;min-height:320px}.panel{border-radius:13px}.panel-head{padding:10px 11px}.metric{padding:9px 8px}.metric-label{font-size:8px;letter-spacing:.06em}.metric-value{font-size:18px}.metric-value em{font-size:9px}.controls{padding:13px}.side{gap:10px}.graph-panel,.equation-panel,.info{padding:12px}.stage-caption{font-size:8px;left:8px;bottom:8px}.legend{right:8px;top:8px;padding:7px 8px;font-size:8px}.camera-pad{left:8px;top:8px}.camera-key{height:25px}.footer-note{margin-top:10px}}
 @media(max-width:420px){body{padding:8px}.brand h1{font-size:14px}.brand p{letter-spacing:.07em}.lang-btn{min-width:72px}.stage-wrap{height:330px;min-height:310px}.metric-value{font-size:16px}.metric{padding:8px 6px}.metric-label{font-size:7px}.view-tools .small-btn{padding:6px 7px;font-size:9px}.model-footer{grid-template-columns:repeat(4,minmax(0,1fr))}.preset{font-size:8px;padding:7px 3px}.camera-pad{width:118px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 </style>
@@ -108,7 +108,7 @@ body.has-fallback-fullscreen{overflow:hidden!important;padding:0!important}
   <header class="topbar">
     <div class="brand">
       <div class="brandmark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l2.2-5 3.5 10 2.2-10 2.1 5H21"/><path d="M4 4h16M4 20h16" opacity=".35"/></svg></div>
-      <div><h1>PHYSICS LAB <span style="color:#54d9f4">/</span> 3D</h1><p>Advanced level · Interactive learning</p></div>
+      <div><h1>PHY TOOLS <span style="color:#54d9f4">/</span> PHYSICS LAB</h1><p>Advanced level · Interactive learning</p></div>
     </div>
     <div class="top-actions"><button class="pill lang-btn" id="langBtn" type="button">සිංහල</button><button class="icon-btn" id="resetTop" type="button" title="Reset simulation" aria-label="Reset simulation">↺</button></div>
   </header>

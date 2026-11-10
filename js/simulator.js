@@ -15,7 +15,7 @@ const ui = {
     footer:'Educational idealised model · Adjust the controls and observe the 3D model and graph · Not a laboratory measurement device',
     back:'Library', rotation:'ROTATION', zoomIn:'Zoom +', zoomOut:'Zoom −', home:'Reset view', soundOn:'Sound: On', soundOff:'Sound: Off',
     studyTitle:'Study note', study:'This is an idealised educational model. Fixed conditions are stated with the equation. Use SI units and check the stated assumptions when interpreting the result.', brand:'PHYSICS SIMULATION TOOLS', resultUnit:'Calculated in',
-    curve:'Relationship curve', current:'Current value', modelLegend:'Simulation model', graphLabel:'Parameter', unavailable:'3D graphics are unavailable. Enable WebGL or use a modern browser.'
+    curve:'Relationship curve', current:'Current value', modelLegend:'Simulation model', graphLabel:'Parameter', guideTitle:'How to investigate', guide1:'Change one variable at a time using the controls.', guide2:'Observe the 3D apparatus and the live graph.', guide3:'Compare the displayed result with the equation and stated assumptions.', unavailable:'3D graphics are unavailable. Enable WebGL or use a modern browser.'
   },
   si: {
     model:'ත්‍රිමාණ පරීක්ෂණ ආකෘතිය', controls:'පරීක්ෂණ පාලක', live:'සජීවී ආදාන', formula:'භෞතික සම්බන්ධතාව', graph:'සජීවී ප්‍රස්ථාරය', graphAxis:'පරාමිතිය හා ප්‍රතිඵලය',
@@ -24,7 +24,7 @@ const ui = {
     footer:'අධ්‍යාපනික ආදර්ශයකි · පාලක වෙනස් කර ත්‍රිමාණ ආකෘතිය හා ප්‍රස්ථාරය නිරීක්ෂණය කරන්න · සැබෑ මිනුම් උපකරණයක් නොවේ',
     back:'ප්‍රධාන පිටුව', rotation:'කරකැවීම', zoomIn:'විශාල කරන්න', zoomOut:'කුඩා කරන්න', home:'මුල් දර්ශනය', soundOn:'ශබ්දය: ක්‍රියාත්මකයි', soundOff:'ශබ්දය: අක්‍රියයි',
     studyTitle:'අධ්‍යයන සටහන', study:'මෙය අධ්‍යාපනික ආදර්ශයකි. සමීකරණයේ දක්වා ඇති ස්ථිර කොන්දේසි සලකන්න. ප්‍රතිඵල අර්ථ දැක්වීමේදී SI ඒකක සහ අදාළ උපකල්පන පරීක්ෂා කරන්න.', brand:'භෞතික විද්‍යා අනුකරණ මෙවලම්', resultUnit:'ගණනයේ ඒකකය',
-    curve:'සම්බන්ධතා වක්‍රය', current:'වත්මන් අගය', modelLegend:'අධ්‍යයන ආකෘතිය', graphLabel:'පරාමිතිය', unavailable:'ත්‍රිමාණ රූප සකස් කළ නොහැක. WebGL සක්‍රිය කරන්න හෝ නවීන බ්‍රවුසරයක් භාවිත කරන්න.'
+    curve:'සම්බන්ධතා වක්‍රය', current:'වත්මන් අගය', modelLegend:'අධ්‍යයන ආකෘතිය', graphLabel:'පරාමිතිය', guideTitle:'පරීක්ෂණය සිදු කරන ආකාරය', guide1:'පාලක භාවිතයෙන් එක් වරකට එක් විචල්‍යයක් පමණක් වෙනස් කරන්න.', guide2:'ත්‍රිමාණ උපකරණය සහ සජීවී ප්‍රස්ථාරය නිරීක්ෂණය කරන්න.', guide3:'ලැබෙන ප්‍රතිඵලය සමීකරණය සහ දක්වා ඇති උපකල්පන සමඟ සසඳන්න.', unavailable:'ත්‍රිමාණ රූප සකස් කළ නොහැක. WebGL සක්‍රිය කරන්න හෝ නවීන බ්‍රවුසරයක් භාවිත කරන්න.'
   }
 };
 
@@ -181,10 +181,12 @@ function applyLanguage() {
   set('toolTitle',title);set('toolSubtitle',description);
   set('toolEyebrow',lang==='si'?`${data.unitNameSi||data.unitName} · මෙවලම ${String(data.number).padStart(3,'0')}`:`${data.unitName||'A/L PHYSICS'} · TOOL ${String(data.number).padStart(3,'0')}`);
   set('modelLabel',t.model);set('controlsLabel',t.controls);set('liveLabel',t.live);set('formulaLabel',t.formula);set('graphLabel',t.graph);set('graphAxisLabel',t.graphAxis);
-  set('resetBtn',t.reset);set('playBtn',running?t.pause:t.play);set('viewBtn',t.view);set('fullBtn',t.fullscreen);set('toolExitFull',lang==='si'?'සම්පූර්ණ තිරයෙන් ඉවත් වන්න':'Exit fullscreen');set('stageCaption',t.hint);set('statusLabel',t.status);set('infoLabel',t.info);set('footerLabel',t.footer);set('sceneFallback',t.unavailable);
+  set('resetBtn',t.reset);set('playBtn',running?t.pause:t.play);set('viewBtn',t.view);set('fullBtn',t.fullscreen);set('toolExitFull',lang==='si'?'සම්පූර්ණ තිරයෙන් ඉවත් වන්න':'Exit fullscreen');set('stageCaption',t.hint);set('statusLabel',t.status);set('infoLabel',t.info);set('footerLabel',t.footer);if($('sceneFallback')?.hidden)set('sceneFallback',t.unavailable);
   set('backLink','← '+t.back);set('cameraTitle',t.rotation);set('zoomPlus',t.zoomIn);set('zoomMinus',t.zoomOut);set('cameraReset',t.home);
   set('langBtn',lang==='en'?'සිංහල':'English');set('soundBtn',soundEnabled?t.soundOn:t.soundOff);
   set('legendModel',t.modelLegend);set('legendInteractive',lang==='en'?'3D · Interactive':'ත්‍රිමාණ · අන්තර්ක්‍රියාකාරී');
+  set('guideTitle',t.guideTitle);
+  const guide=$('guideList');if(guide)guide.innerHTML=[t.guide1,t.guide2,t.guide3].map(x=>`<li>${x}</li>`).join('');
   set('curveLegend',t.curve);set('currentLegend',t.current);set('graphXAxis',t.graphLabel);set('studyNoteTitle',t.studyTitle);set('studyNoteText',t.study);
   set('metricALabel',lang==='si'?(data.aLabelSi||data.aLabel):(data.aLabel||'Parameter A'));
   set('metricBLabel',lang==='si'?(data.bLabelSi||data.bLabel):(data.bLabel||'Parameter B'));
@@ -253,16 +255,40 @@ async function toggleFull(){
 setupControls();
 applyLanguage();
 $('toolTitle').textContent=lang==='si'?(data.titleSi||data.title):data.title;
+function showSceneError(error) {
+  const fallback = $('sceneFallback');
+  if (!fallback) return;
+  const detail = `${error?.name || 'Error'}: ${error?.message || String(error)}`;
+  fallback.replaceChildren();
+  const message = document.createElement('div');
+  message.className = 'scene-error-message';
+  message.textContent = lang === 'si'
+    ? 'ත්‍රිමාණ ආකෘතිය ආරම්භ කළ නොහැකි විය. පාලක සහ ගණනය කිරීම් තවදුරටත් භාවිත කළ හැක.'
+    : 'The 3D model could not start. Controls and calculations remain available.';
+  const diagnostic = document.createElement('code');
+  diagnostic.className = 'scene-error-detail';
+  diagnostic.textContent = detail;
+  const hint = document.createElement('small');
+  hint.textContent = lang === 'si' ? 'මෙම තාක්ෂණික දෝෂය සටහන් කරගන්න.' : 'Use this exact technical detail to diagnose the remaining issue.';
+  fallback.append(message, diagnostic, hint);
+  fallback.hidden = false;
+  fallback.style.display = 'flex';
+  fallback.style.flexDirection = 'column';
+  fallback.style.alignItems = 'center';
+  fallback.style.justifyContent = 'center';
+  fallback.style.gap = '8px';
+  console.error('PHY 3D engine error:', error);
+}
+$('scene').addEventListener('phy-3d-error', event => showSceneError(event.detail));
+$('scene').addEventListener('webglcontextlost', event => {
+  event.preventDefault();
+  showSceneError(new Error('WebGL context lost while rendering the simulation.'));
+});
 try {
   const { createPhysicsScene } = await import('./physics-engine.js');
   simulation = createPhysicsScene($('scene'), data, state);
 } catch(error) {
-  const fallback = $('sceneFallback');
-  fallback.hidden = false;
-  fallback.textContent = lang === 'si'
-    ? 'ත්‍රිමාණ ආකෘතිය ලබාගත නොහැක. නමුත් පාලක සහ ගණනය කිරීම් භාවිත කළ හැක. අන්තර්ජාල සම්බන්ධතාව සහ WebGL පරීක්ෂා කරන්න.'
-    : 'The 3D model could not load. The controls and calculations remain available. Check your internet connection and WebGL support.';
-  console.error('PHY 3D engine error:', error);
+  showSceneError(error);
 }
 refresh();
 $('resetBtn').addEventListener('click',()=>{

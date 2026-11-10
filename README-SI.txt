@@ -1,57 +1,43 @@
-PHY TOOLS — TEST REPOSITORY UPDATE (SINHALA)
-==============================================
+PHY TOOLS — TEST PACKAGE උපදෙස්
+===============================
 
-මෙම package එක TEST repository එක සඳහා පමණි. දැනට live/original PHY-tools repository එක වෙනස් නොකරන්න.
+මෙම ZIP එක TEST repository එකට පමණක් upload කරන්න. දැනට වැඩ කරන original/live repository එකට තවම upload කරන්න එපා.
 
-මෙම version එකේ ප්‍රධාන වෙනස:
-- Category තෝරාගත් විට tools වෙනම tools.html page එකේ පෙන්වයි.
-- Simulation card එක click කළ විට iframe/srcdoc නොව සැබෑ වෙනම URL එකකට යයි:
-    simulate.html?id=<tool-id>
-- Boyle's Law සඳහා වෙනම boyles-with-sound.html page එක භාවිත කරයි.
-- Simulation page එකෙන් ආපසු එන විට කලින් තෝරාගත් category එකටම යයි.
-- 3D engine load නොවුණත් controls, calculations, graphs, language සහ sound UI ආරම්භ වීමට simulator.js වෙනස් කර ඇත.
-- Three.js + OrbitControls සඳහා browser internet connection අවශ්‍යයි. WebGL අවශ්‍ය browser වල 3D දර්ශනය ක්‍රියා කරයි.
+මෙම සංස්කරණයේ ප්‍රධාන වෙනස්කම්
+--------------------------------
+1. සාමාන්‍ය simulator වල Three.js WebGL renderer එක Boyle's Law හි ක්‍රියාත්මක renderer settings වලට සමාන කර ඇත. Antialiasing context එක සකස් කළ නොහැකි නම් අඩු resource භාවිත කරන renderer එකකින් නැවත උත්සාහ කරයි.
+2. 3D model එක ආරම්භ නොවුණොත් දැන් generic message එකක් පමණක් නොව browser එකෙන් ලැබුණු සැබෑ error name/message එකත් පෙන්වයි.
+3. Energy Forms and Changes tool එකේ වැරදි gas piston model එක වෙනුවට beaker/calorimeter, water, heater, thermometer සහ heat indicators ඇති thermal model එකක් යොදා ඇත.
+4. Gas-law simulations වල piston සහ gas-particle model එක තවදුරටත් වෙනම පවතී.
+5. Simulator page එකේ equation, graph, result, input controls, pause/reset, camera, fullscreen, sound, What to observe, Study note සහ අලුත් How to investigate උපදෙස් ඇතුළත්ය.
+6. How to investigate සහ 3D error details English/Sinhala භාෂා දෙකෙන්ම පෙන්වයි.
+7. Main, category, simulator, admin සහ Boyle pages වල PHY logo scroll කරන විටත් පෙනෙන ලෙස header එක sticky කර ඇත. 404/About pages වලත් PHY favicon යොදා ඇත.
 
-UPLOAD — TEST REPOSITORY ONLY
------------------------------
+TEST REPOSITORY එකට upload කරන ආකාරය
+-------------------------------------
 1. ZIP එක Extract කරන්න.
-2. PHY-Tools-Dedicated-Simulator-Fix folder එක ඇතුළට යන්න.
-3. එහි ඇති සියලු files සහ folders test repository එකේ root එකට upload කරන්න.
-4. GitHub කියන විට files replace කරන්න. index.html, tools.html සහ js/ files අනිවාර්යයෙන් replace විය යුතුයි.
+2. Extract කළ folder එකේ ඇතුළත සියලු files සහ folders select කරන්න.
+3. PHY-tools-test repository එකේ root එකට upload කර පරණ package files replace කරන්න.
+4. index.html, tools.html, simulate.html, boyles-with-sound.html, js/, css/, data/, firebase/ ඇතුළු package එකේ files සියල්ලම upload විය යුතුය.
 5. Commit changes කරන්න.
-6. GitHub Pages settings: Deploy from a branch → main → /(root).
-7. Test URL: https://niwansathsara.github.io/PHY-tools-test/  (repository නම වෙනස් නම් URL එකට ඒ නම යොදන්න.)
+6. GitHub Pages: Deploy from a branch → main → /(root).
+7. Test site එක Ctrl+F5 සමඟ නැවත load කරන්න.
 
-TEST ORDER
-----------
-A. Home page → category card → category tools page.
-B. Tool 001 (SI Unit Converter) → simulate.html?id=si-unit-converter.
-C. Slider වෙනස් කරන්න → metric/result/graph වෙනස් විය යුතුයි.
-D. Play/Pause සහ Reset පරීක්ෂා කරන්න.
-E. Sound On/Off සහ English/Sinhala පරීක්ෂා කරන්න.
-F. View controls, rotate, zoom සහ fullscreen පරීක්ෂා කරන්න.
-G. Boyle's Law වෙත ගොස් slider, particle toggle, sound සහ fullscreen පරීක්ෂා කරන්න.
-H. Browser Console එකේ errors තිබේද පරීක්ෂා කරන්න.
+පළමුව පරීක්ෂා කළ යුතු දේ
+-------------------------
+A. Energy Forms and Changes — දැන් beaker, heater, thermometer දෘශ්‍යමාන විය යුතුය.
+B. Gas Laws යටතේ Boyle/Charles/Ideal Gas tools — piston හා particles පෙන්විය යුතුය.
+C. Play/Pause, Reset, sliders, camera rotate/zoom, fullscreen සහ sound.
+D. Sinhala/English මාරු කිරීම.
+E. Scroll කළ විට PHY logo/header පෙනී තිබීම.
+F. Boyle's Law — පරණ ක්‍රියාකාරී 3D simulation එක වෙනස් වී නැතිදැයි බලන්න.
 
-FILE STRUCTURE
---------------
-index.html              Main categories page
- tools.html             Selected syllabus unit page
- simulate.html          Standalone simulator page
- boyles-with-sound.html Separate Boyle's Law simulation
- js/simulator-loader.js Loads selected tool data from data/catalog.json
- js/simulator.js        Simulator controls, calculations and language
- js/physics-engine.js   Three.js 3D scene engine
- data/catalog.json      10 syllabus units + 130 simulation definitions
- css/tool.css           Simulator page design
-
-LIMITATIONS
------------
-- 130 tool definitions and their display/calculation setup are included. This is not a claim that every topic has a fully research-validated bespoke physical model. Some concepts share visual archetypes in the 3D engine.
-- Three.js is loaded from jsDelivr CDN. If that CDN is blocked by the user's network, the 3D model will show an error, but the controls/calculation interface remains usable.
-- Test the package on the TEST repository first. Do not deploy it to the original repository until the test passes.
-
-
-3D MODEL VIEW / POSITION UPDATE
+තවම 3D model එක load නොවුණොත්
 -------------------------------
-මෙම update එකෙන් physics-engine.js සහ css/tool.css වෙනස් කර ඇත. එක් එක් 3D model එකේ ප්‍රමාණයට අනුව camera view එක auto-fit වේ. Mobile/fullscreen වල stage resize වීමත් හඳුනාගනී. Pendulum සහ Terminal Velocity model වල objects platform එක යටින් වැටීම සීමා කර ඇත. Fluid bubbles tank එක ඇතුළත පවතී. සවිස්තරය 3D-STAGE-FIX-SI.txt තුළ ඇත.
+දැන් 3D stage එකේම තාක්ෂණික error එක පෙන්වයි. එහි error detail එක copy කර හෝ screenshot එකක් එවන්න. ඒකෙන් WebGL context ද, CDN/module loading ද, Three.js scene initialization ද කියලා වෙන් කර හඳුනාගත හැකියි.
+
+වැදගත් සීමාව
+-------------
+මෙම සකස් කිරීමේ පරිසරයෙන් external CDN host එකට සම්බන්ධ විය නොහැකි නිසා GitHub Pages live WebGL render එක browser එකකින් තහවුරු කර නැත. මෙහි JavaScript syntax, catalogue, model type mapping, page structure සහ ZIP integrity පමණක් ස්ථිතිකව පරීක්ෂා කර ඇත. සැබෑ browser test එක TEST repository එකේ කළ යුතුය.
+
+Tools 130ම catalogue එකේ ඇත. ඒවා topic-oriented shared 3D model families භාවිත කරයි; 130ම වෙන වෙනම bespoke 3D models නොවේ. සියලු භෞතික සූත්‍ර/උපකල්පනත් සම්පූර්ණ syllabus audit එකකින් තහවුරු කර නැත.

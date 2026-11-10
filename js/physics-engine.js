@@ -26,7 +26,17 @@ export function createPhysicsScene(canvas,meta,initialState={a:1,b:1}){
   scene.fog=new THREE.Fog(0x11151a,12,28);
   camera=new THREE.PerspectiveCamera(48,initialSize.width/initialSize.height,.05,160);
   camera.up.set(0,1,0);
-  renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:"high-performance"});
+  // Match the verified Boyle's Law WebGL context attributes. A forced
+  // high-performance request / opaque context can fail on some integrated GPUs.
+  try {
+   renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  } catch(firstError) {
+   // Retry with the least demanding context options before reporting an error.
+   try { renderer=new THREE.WebGLRenderer({canvas,antialias:false,alpha:true}); }
+   catch(secondError) {
+    throw new Error(`WebGL renderer creation failed. Standard: ${firstError?.message||firstError}. Compatibility retry: ${secondError?.message||secondError}.`);
+   }
+  }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
   renderer.setSize(initialSize.width,initialSize.height,false);
   renderer.outputColorSpace=THREE.SRGBColorSpace;
@@ -94,10 +104,18 @@ export function createPhysicsScene(canvas,meta,initialState={a:1,b:1}){
   function frame(now){
    if(disposed)return;
    raf=requestAnimationFrame(frame);
-   const dt=Math.min(.04,(now-last)/1000||.016);last=now;
-   if(state.running)elapsed+=dt;
-   updateModel(visualType,dynamic,state,elapsed,dt,meta);
-   controls.update();renderer.render(scene,camera);
+   try {
+    const dt=Math.min(.04,(now-last)/1000||.016);last=now;
+    if(state.running)elapsed+=dt;
+    updateModel(visualType,dynamic,state,elapsed,dt,meta);
+    controls.update();renderer.render(scene,camera);
+   } catch(error) {
+    disposed=true;cancelAnimationFrame(raf);
+    if(observer)observer.disconnect();
+    try{controls?.dispose();}catch(_){}
+    try{renderer?.dispose();}catch(_){}
+    canvas.dispatchEvent(new CustomEvent('phy-3d-error',{detail:error}));
+   }
   }
   raf=requestAnimationFrame(frame);
   function rotate(dx,dy){
@@ -157,12 +175,30 @@ function buildModel(kind,g,d,meta={}){
  }else if(kind==="waves"){
   const points=[];for(let i=0;i<=100;i++){const x=-2+i*4/100;points.push(new THREE.Vector3(x,0,0));}const geo=new THREE.BufferGeometry().setFromPoints(points);d.wave=new THREE.Line(geo,new THREE.LineBasicMaterial({color:0x57b2ff}));g.add(d.wave);d.waveMaterial=d.wave.material;d.nodeLine=box(g,[0,-.4,0],[4.1,.025,.045],0x657587,.35,.6);d.marker=ball(g,[0,0,0],0x79df9b,.1,.3);
   for(let i=0;i<9;i++)box(g,[-1.8+i*.45,-.5,0],[.012,.12,.08],0xa4b4c4,.4,.4);
- }else if(kind==="thermal"||kind==="gas"){
+ }else if(kind==="thermal"){
+  // Energy transfer apparatus: a glass calorimeter, visible water volume,
+  // electric heater, thermometer, molecules and heat-flow indicators.
+  const glassBeaker=new THREE.MeshPhysicalMaterial({color:0x9bcdf0,metalness:.06,roughness:.08,transparent:true,opacity:.18,side:THREE.DoubleSide,depthWrite:false,clearcoat:1});
+  const waterMat=new THREE.MeshPhysicalMaterial({color:0x238fd4,metalness:.02,roughness:.13,transparent:true,opacity:.78,side:THREE.DoubleSide,clearcoat:1});
+  mesh(new THREE.CylinderGeometry(.78,.72,1.52,64,1,true),glassBeaker,g,[0,.08,0]);
+  ring(g,.78,.028,0xb8d4e8,[0,.84,0]);ring(g,.72,.025,0x8aa9c1,[0,-.68,0]);
+  box(g,[0,-.73,0],[1.9,.14,1.55],0x344657,.28,.72);
+  d.thermalWater=mesh(new THREE.CylinderGeometry(.66,.66,.7,64,1),waterMat,g,[0,-.28,0]);
+  d.thermalSurface=mesh(new THREE.CircleGeometry(.66,64),new THREE.MeshStandardMaterial({color:0x8ed5ff,transparent:true,opacity:.48,side:THREE.DoubleSide}),g,[0,.07,0]);d.thermalSurface.rotation.x=-Math.PI/2;
+  const heaterMat=new THREE.MeshStandardMaterial({color:0xf08b55,emissive:0xd94822,emissiveIntensity:.7,metalness:.62,roughness:.24});
+  d.heater=mesh(new THREE.TorusGeometry(.48,.055,14,72),heaterMat,g,[0,-.62,0]);d.heater.rotation.x=Math.PI/2;
+  box(g,[.94,.08,.12],[.055,1.18,.055],0xc4d6e5,.18,.38);
+  d.thermometerMercury=box(g,[.94,-.2,.16],[.02,.48,.02],0xf06e62,.2,.2);
+  d.thermometerBulb=ball(g,[.94,-.5,.16],0xf06e62,.07,.1);
+  d.thermalMolecules=[];
+  for(let i=0;i<30;i++){const angle=i*2.399,rad=.12+Math.sqrt((i+.5)/30)*.46,y=-.56+((i*7)%14)*.045;const molecule=ball(g,[Math.cos(angle)*rad,y,Math.sin(angle)*rad],i%4===0?0xffd28a:0x9bdfff,.034,.12);d.thermalMolecules.push({mesh:molecule,phase:i*1.73,rad,angle});}
+  d.heatRays=[];
+  for(let i=0;i<6;i++){const x=-.5+i*.2;d.heatRays.push(line(g,[[x,-.54,.48],[x,-.28,.48],[x+.08,-.08,.48]],0xffa06b,.8,.018));}
+ }else if(kind==="gas"){
   const tube=mesh(new THREE.CylinderGeometry(.68,.68,3.35,64,1,true),glass,g,[0,.05,0]);tube.rotation.z=Math.PI/2;d.tube=tube;
   ring(g,.68,.035,0xb1c2d4,[-1.675,.05,0],[0,Math.PI/2,0]);ring(g,.68,.035,0xb1c2d4,[1.675,.05,0],[0,Math.PI/2,0]);
   d.piston=mesh(new THREE.CylinderGeometry(.61,.61,.16,64),blue,g,[1.35,.05,0]);d.piston.rotation.z=Math.PI/2;
   d.particles=[];for(let i=0;i<38;i++){const p=ball(g,[THREE.MathUtils.randFloat(-1.35,.9),THREE.MathUtils.randFloat(-.42,.52),THREE.MathUtils.randFloat(-.42,.52)],i%3===0?0x9adfff:0x3b9dff,.045,.18);d.particles.push({mesh:p,v:new THREE.Vector3(THREE.MathUtils.randFloatSpread(1),THREE.MathUtils.randFloatSpread(1),THREE.MathUtils.randFloatSpread(1)).normalize()});}
-  if(kind==="thermal"){d.heatRays=[];for(let i=0;i<5;i++)d.heatRays.push(line(g,[[ -1.7,-.8+i*.12,0],[-1.1,-.8+i*.12,0]],0xff9a60,.75,.018));}
  }else if(kind==="gas-state"){
   const chamberMat=new THREE.MeshPhysicalMaterial({color:0x7cbfe8,transparent:true,opacity:.11,roughness:.1,side:THREE.DoubleSide,depthWrite:false});
   mesh(new THREE.BoxGeometry(2.65,1.75,1.25),chamberMat,g,[0,.02,0]);
@@ -314,17 +350,27 @@ function updateModel(kind,d,s,t,dt,meta={}){
  if(kind==="rotation"||kind==="torque"){if(d.disk)d.disk.rotation.y=t*THREE.MathUtils.clamp(b/3,.3,3);if(d.handle)d.handle.rotation.y=t*.2;}
  if(kind==="oscillator"){if(d.mass)d.mass.position.y=-.15+Math.sin(t*Math.sqrt(Math.max(.2,b/Math.max(.2,a))))*.32;}
  if(kind==="waves"){if(d.wave){const pos=d.wave.geometry.attributes.position;const amp=THREE.MathUtils.clamp(a/10,.08,.9),freq=THREE.MathUtils.clamp(b/3,.2,4);for(let i=0;i<pos.count;i++){const x=-2+i*4/(pos.count-1);pos.setXYZ(i,x,amp*Math.sin(x*freq*2.8-t*freq*2.0),0);}pos.needsUpdate=true;d.wave.geometry.computeVertexNormals();if(d.marker){const x=Math.sin(t*.6)*1.85;d.marker.position.set(x,amp*Math.sin(x*freq*2.8-t*freq*2),0);}}}
- if(kind==="gas"||kind==="thermal"){
-  const id=meta.id||'';let volume=1,temp=1,attraction=0;
+ if(kind==="gas"){
+  const id=meta.id||'';let volume=1,temp=1;
   if(id==='gas-properties'){volume=THREE.MathUtils.clamp(b/24.6,.25,2.5);temp=1;}
   else if(id==='charles-law-simulator'){volume=THREE.MathUtils.clamp((a*b/300)/24.6,.25,2.5);temp=Math.sqrt(Math.max(.1,b/300));}
   else if(id==='pressure-law-simulator'){volume=1;temp=Math.sqrt(Math.max(.1,b/300));}
   else if(id==='ideal-gas-equation-simulator'){volume=1;temp=Math.sqrt(Math.max(.1,b/300));}
   else if(id==='gases-intro'){volume=1;temp=THREE.MathUtils.clamp(b/500,.15,2.8);}
-  else if(id==='energy-forms-and-changes'){volume=1;temp=THREE.MathUtils.clamp(b/300,.3,2.5);}
   else {volume=1;temp=THREE.MathUtils.clamp(b/300,.4,2.5);}
   if(d.piston)d.piston.position.x=.95+(volume-1)*1.15;
   for(const p of d.particles||[]){if(s.running){p.mesh.position.addScaledVector(p.v,dt*temp*.9);const xmax=.95+(volume-1)*1.15-.15;if(p.mesh.position.x>xmax||p.mesh.position.x< -1.45)p.v.x*=-1;if(Math.abs(p.mesh.position.y)>.47)p.v.y*=-1;if(Math.abs(p.mesh.position.z)>.47)p.v.z*=-1;}}
+ }
+ if(kind==="thermal"){
+  const massFraction=THREE.MathUtils.clamp(a/20,.08,1),tempChange=THREE.MathUtils.clamp(b/100,.02,1);
+  const waterHeight=.22+massFraction*.9, waterBase=-.66;
+  if(d.thermalWater){d.thermalWater.scale.y=waterHeight/.7;d.thermalWater.position.y=waterBase+waterHeight/2;}
+  if(d.thermalSurface)d.thermalSurface.position.y=waterBase+waterHeight;
+  const heat=THREE.MathUtils.clamp(tempChange,0,1);
+  if(d.heater?.material)d.heater.material.emissiveIntensity=.25+heat*1.5;
+  if(d.thermometerMercury){d.thermometerMercury.scale.y=.35+heat*.75;d.thermometerMercury.position.y=-.48+(d.thermometerMercury.scale.y/2);}
+  if(s.running){for(const p of d.thermalMolecules||[]){const speed=.25+heat*1.7,angle=p.angle+t*speed*(.4+(p.phase%1));const x=Math.cos(angle)*(p.rad+.035*Math.sin(t*2+p.phase)),z=Math.sin(angle)*(p.rad+.035*Math.cos(t*2+p.phase));const y=waterBase+.06+((p.phase*7+t*speed*.15)%1)*Math.max(.12,waterHeight-.12);p.mesh.position.set(x,y,z);}}
+  for(const ray of d.heatRays||[]){ray.material.opacity=.25+heat*(.45+.25*Math.sin(t*3));}
  }
  if(kind==="gas-state"){
   const temp=THREE.MathUtils.clamp(a,50,1500),attraction=THREE.MathUtils.clamp(b,0,10);

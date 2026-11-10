@@ -1,22 +1,13 @@
-PHY TOOLS — 3D MODEL POSITION & VIEWPORT FIX
-============================================
+3D MODEL UPDATE — 2026-11-10
+============================
 
-මෙම update එක Test Repository එක සඳහා පමණි. Original/live repository එකට upload නොකරන්න.
+මෙම update එකේ ප්‍රධාන අරමුණ non-Boyle simulators හි 3D scene ආරම්භ වීමේ compatibility ගැටලුව නිවැරදි කිරීමයි.
 
-හදා ඇති 3D ගැටලු:
-1. සෑම simulator model එකකටම fixed camera position එකක් භාවිත කළ නිසා model එක viewport එකෙන් පිටතට/පහළට පෙනීමේ අවදානම තිබුණා. දැන් model geometry එකේ bounds අනුව camera target සහ zoom ස්වයංක්‍රීයව සකස් කරයි.
-2. 3D canvas size එක පමණක් observe කළ නිසා stage/fullscreen/mobile size වෙනස්වීමේදී render size වැරදීමේ හැකියාව තිබුණා. දැන් stage container එක observe කර renderer සහ camera aspect ratio update කරයි.
-3. Pendulum එකේ දිග වැඩි කළ විට bob එක platform එක යටින් යා හැකිව තිබුණා. Pivot එක ඉහළට ගෙන maximum visual length සීමා කර ඇත.
-4. Terminal-velocity model එකේ falling sphere එක container/platform එක හරහා ගමන් කළ හැකිව තිබුණා. Container bottom එකට පෙර visible limit එකක නවතයි.
-5. Fluid bubbles නැවත tank එක ඇතුළත පටන්ගන්න ලෙස සකස් කර ඇත.
-6. 3D stage එකේ canvas full-stage positioning සහ mobile stage height වැඩි කර ඇත.
+- 3D renderer config එක Boyle's Law හි වැඩ කරන config එකට සමාන කර ඇත (alpha:true, forced high-performance request නැත).
+- Antialiasing WebGL context එක සෑදිය නොහැකි නම් antialias:false සමඟ නැවත උත්සාහ කරයි.
+- Error එක තවමත් පැමිණියහොත් 3D stage එකේ සැබෑ browser error name සහ message පෙන්වයි.
+- Energy Forms and Changes සඳහා gas piston model වෙනුවට calorimeter/beaker + heater + thermometer + water molecule model එකක් සකස් කර ඇත.
+- Gas-law models වෙනම piston/particle model එකක් ලෙස පවතී.
+- Controls, graph, equation, observation, study note සහ Sinhala/English labels අඩංගුය.
 
-පරීක්ෂණ:
-- physics-engine.js, simulator.js, simulator-loader.js JavaScript syntax checks: PASS
-- catalog: 10 units / 130 unique tools
-- all catalog visualTypes have matching model builders
-- no Boyle's Law HTML changes made in this patch
-- ZIP integrity: PASS
-
-සීමාව:
-මෙම container එකෙන් jsDelivr/CDN ලබාගැනීම සහ live browser WebGL test කිරීම කළ නොහැකි විය. එබැවින් 130ම real browser 3D render එකෙන් පරීක්ෂා කළ බවක් අදහස් නොවේ. Test repository එකේ Chrome browser එකෙන් නැවත තහවුරු කළ යුතුය.
+සීමාව: මෙම code preparation environment එකෙන් CDN access නැති නිසා user browser එකේ WebGL run එක තහවුරු කර නැත. Test repository එකේ සැබෑ browser test අවශ්‍යය.
