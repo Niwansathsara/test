@@ -1,0 +1,20 @@
+PHY TOOLS — TEST REFINEMENT PASS
+2026-11-11
+
+This package is intended for the TEST repository only. Do not upload it to the main PHY-tools repository until it has been checked there.
+
+Changes in this pass:
+- Replaced detached A/B nudge buttons with +/- controls beside each actual slider; added an optional third control for torque angle and pendulum initial displacement.
+- Removed the two decorative side-mounted parameter gauge bars from every 3D apparatus and removed the horizontal metric strips below the readouts.
+- Added the force/lever-arm angle term to torque calculation and visual force direction.
+- Added a pendulum initial-angle slider; actual length is retained in the period calculation while the displayed rod is scaled to remain inside the stage.
+- Fixed vector-resolution arrow components to use magnitude and angle; corrected projectile angle endpoints at 0 and 90 degrees.
+- Gas law chamber piston and particle space now respond to the relevant volume variable; temperature/amount inputs affect particle speed/count where appropriate.
+- Circuit bulb brightness now follows power/current-related quantities and includes a PointLight; AC frequency modulates flicker rather than being treated as electrical power.
+- Boyle's Law standalone simulator retains 800 K reference/default and supports temperatures up to 1000 K, including a 1000 K preset.
+- Main page syllabus unit grid is four columns on desktop; tools grids are three columns; tool names are explicitly white on main and category pages.
+- Reset filters on a category page returns to the library and clears all filters.
+
+Validation performed: JSON parse; 130 catalogue records; 10 unit records; JavaScript syntax for simulator and physics engine; HTML tag balance checks; expected page asset references; Boyle file retains standalone structure; ZIP integrity.
+
+Not claimed: 130 physical models have not all been individually certified against the syllabus or live-tested in a full browser/WebGL session. Please verify the test site before merging to the main repository.

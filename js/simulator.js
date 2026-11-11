@@ -3,7 +3,7 @@ const data = JSON.parse($('tool-data').textContent);
 const C = { G: 6.67430e-11, k: 8.9875517923e9, e: 1.602176634e-19, h: 6.62607015e-34, c: 299792458, kB: 1.380649e-23, eps0: 8.8541878128e-12, mu0: 1.25663706212e-6, g: 9.80665 };
 const R = data.ranges || [0, 10, .1, 0, 10, .1];
 const D = data.defaults || [1, 1];
-let state = { a: Number(D[0]), b: Number(D[1]) }, simulation = null, running = true;
+let state = { a: Number(D[0]), b: Number(D[1]), ...(data.cLabel ? { c: Number(D[2] ?? 90) } : {}) }, simulation = null, running = true;
 let lang = 'en', soundEnabled = false, audioContext = null, animationSpeed = 1, graphAxis = 'a', savedReadings = [];
 const MAX_SAVED_READINGS = 8;
 try { lang = localStorage.getItem('phy-lang') === 'si' ? 'si' : 'en'; } catch (_) { lang = 'en'; }
@@ -45,7 +45,7 @@ function fmt(v) {
   }
   return String(Number(v.toPrecision(5)));
 }
-function value(a, b) {
+function value(a, b, c=state.c ?? 90) {
   const t = data.calcType || 'product';
   const safe = x => Math.max(Math.abs(x), 1e-30);
   switch (t) {
@@ -61,7 +61,7 @@ function value(a, b) {
     case 'newton-second': return a*b;
     case 'friction': return Math.abs(a*b);
     case 'force-resultant': return Math.hypot(a,b);
-    case 'torque': return a*b;
+    case 'torque': return a*b*Math.sin(Number(c)*Math.PI/180);
     case 'centre-mass': return b/(a+b);
     case 'potential-energy': return a*C.g*b;
     case 'elastic-collision': return ((a-b)*2 + 2*b*(-1))/(a+b);
@@ -159,12 +159,12 @@ function value(a, b) {
     default: return a*b;
   }
 }
-function displayValue(a,b) {
+function displayValue(a,b,c=state.c ?? 90) {
   if (data.calcType === 'vector-components') {
     const x=a*Math.cos(b*Math.PI/180), y=a*Math.sin(b*Math.PI/180);
     return `Aₓ = ${fmt(x)} · Aᵧ = ${fmt(y)}`;
   }
-  return fmt(value(a,b));
+  return fmt(value(a,b,c));
 }
 function unitResult() { return lang==='si' ? (data.resultUnitSi || data.resultUnit || 'SI') : (data.resultUnit || 'SI'); }
 let frequencyVoices = [];
@@ -184,7 +184,7 @@ function playTone(freq=440, duration=.07, type='sine', offset=0, volume=.035) {
   } catch (e) { console.warn('Audio is not available in this browser',e); }
 }
 const UI_SOUNDS = {
-  sliderA:[[285,.035,'sine']], sliderB:[[430,.04,'triangle']],
+  sliderA:[[285,.035,'sine']], sliderB:[[430,.04,'triangle']], sliderC:[[560,.045,'sawtooth']],
   play:[[660,.055,'triangle'],[880,.085,'sine']], pause:[[330,.09,'triangle']],
   reset:[[720,.055,'triangle'],[520,.055,'triangle',.07],[360,.10,'sine',.14]],
   view:[[540,.05,'sine']], soundOn:[[620,.05,'sine'],[830,.09,'sine',.07]], soundOff:[[390,.06,'triangle'],[250,.08,'sine',.07]],
@@ -311,16 +311,17 @@ function applyLanguage() {
 }
 function setupControls() {
   const specs=[
-    {id:'a',en:data.aLabel||'Parameter A',si:data.aLabelSi||'පළමු පරාමිතිය',unit:data.aUnit||'',min:R[0],max:R[1],step:R[2],value:D[0]},
-    {id:'b',en:data.bLabel||'Parameter B',si:data.bLabelSi||'දෙවන පරාමිතිය',unit:data.bUnit||'',min:R[3],max:R[4],step:R[5],value:D[1]}
+    {id:'a',en:data.aLabel||'Parameter A',si:data.aLabelSi||'පළමු පරාමිතිය',unit:data.aUnit||'',min:R[0],max:R[1],step:R[2],value:D[0],offset:0},
+    {id:'b',en:data.bLabel||'Parameter B',si:data.bLabelSi||'දෙවන පරාමිතිය',unit:data.bUnit||'',min:R[3],max:R[4],step:R[5],value:D[1],offset:3}
   ];
+  if(data.cLabel) specs.push({id:'c',en:data.cLabel,si:data.cLabelSi||'තෙවන පරාමිතිය',unit:data.cUnit||'',min:R[6],max:R[7],step:R[8],value:D[2]??90,offset:6});
   $('controlMount').innerHTML='';
   specs.forEach((s)=>{
     const wrap=document.createElement('div');wrap.className='tool-control';
-    wrap.innerHTML=`<div class="tool-control-row"><label id="label-${s.id}" for="range-${s.id}"></label><output id="read-${s.id}">${fmt(s.value)} ${formatPowers(s.unit)}</output></div><input class="tool-range" id="range-${s.id}" type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.value}"><div class="tool-range-labels"><span>${fmt(s.min)} ${formatPowers(s.unit)}</span><span>${fmt(s.max)} ${formatPowers(s.unit)}</span></div>`;
+    wrap.innerHTML=`<div class="tool-control-row"><label id="label-${s.id}" for="range-${s.id}"></label><div class="tool-control-adjust"><button type="button" class="tool-step" data-nudge="${s.id}:-1" aria-label="Decrease ${s.en}">−</button><output id="read-${s.id}">${fmt(s.value)} ${formatPowers(s.unit)}</output><button type="button" class="tool-step" data-nudge="${s.id}:1" aria-label="Increase ${s.en}">+</button></div></div><input class="tool-range" id="range-${s.id}" type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.value}"><div class="tool-range-labels"><span>${fmt(s.min)} ${formatPowers(s.unit)}</span><span>${fmt(s.max)} ${formatPowers(s.unit)}</span></div>`;
     $('controlMount').append(wrap);
     $(`range-${s.id}`).addEventListener('input',e=>{
-      const v=Number(e.target.value);state[s.id]=v;$(`read-${s.id}`).textContent=`${fmt(v)} ${formatPowers(s.unit)}`;document.querySelectorAll('[data-preset]').forEach(x=>x.classList.remove('active'));refresh();playUISound(s.id==='a'?'sliderA':'sliderB',true);
+      const v=Number(e.target.value);state[s.id]=v;$(`read-${s.id}`).textContent=`${fmt(v)} ${formatPowers(s.unit)}`;document.querySelectorAll('[data-preset]').forEach(x=>x.classList.remove('active'));refresh();playUISound(s.id==='a'?'sliderA':s.id==='b'?'sliderB':'sliderC',true);
     });
   });
   applyControlLanguage();
@@ -328,9 +329,10 @@ function setupControls() {
 function applyControlLanguage(){
   $('label-a').textContent=lang==='si'?(data.aLabelSi||'පළමු පරාමිතිය'):(data.aLabel||'Parameter A');
   $('label-b').textContent=lang==='si'?(data.bLabelSi||'දෙවන පරාමිතිය'):(data.bLabel||'Parameter B');
+  if(data.cLabel && $('label-c')) $('label-c').textContent=lang==='si'?(data.cLabelSi||'තෙවන පරාමිතිය'):data.cLabel;
 }
-function chartNumber(a,b){
-  const raw=value(a,b);
+function chartNumber(a,b,c=state.c ?? 90){
+  const raw=value(a,b,c);
   if(typeof raw==='number')return Number.isFinite(raw)?raw:null;
   const numeric=Number(raw);
   if(Number.isFinite(numeric))return numeric;
@@ -341,12 +343,11 @@ function chartNumber(a,b){
 }
 function updateMeters(){
   const p=(key,range)=>{const min=Number(range[0]),max=Number(range[1]),v=Number(state[key]);return Math.max(0,Math.min(100,(v-min)/(max-min||1)*100));};
-  const a=$('meterA'),b=$('meterB');if(a)a.style.width=p('a',R.slice(0,3))+'%';if(b)b.style.width=p('b',R.slice(3,6))+'%';
-  const m=$('meterResult');if(m){const q=chartNumber(state.a,state.b);m.style.width=(q===null?0:Math.max(8,Math.min(100,Math.abs(q)/(Math.abs(q)+1)*100)))+'%';}
+  // Redundant edge indicator bars were removed; numerical readouts remain the primary feedback.
 }
 function refresh() {
   if(simulation) simulation.setState({...state,running,speed:animationSpeed});
-  const raw=displayValue(state.a,state.b);
+  const raw=displayValue(state.a,state.b,state.c);
   $('metricA').textContent=fmt(state.a);$('metricB').textContent=fmt(state.b);$('metricResult').textContent=raw;
   $('resultValue').textContent=typeof raw==='string'&&raw.includes('=')?raw:`${raw} ${unitResult()}`;
   $('resultLabel').textContent=lang==='si'?(data.resultLabelSi||ui.si.result):(data.resultLabel||ui.en.result);
@@ -359,19 +360,19 @@ function drawGraph(){
   const p={l:58,r:14,t:13,b:34},x0=p.l,y0=H-p.b,x1=W-p.r,y1=p.t;
   ctx.strokeStyle='rgba(170,195,216,.14)';ctx.lineWidth=1;ctx.font='10px system-ui';ctx.fillStyle='#8197aa';ctx.textAlign='right';
   const range=graphAxis==='a'?R.slice(0,3):R.slice(3,6),loX=Number(range[0]),hiX=Number(range[1]),fixed=graphAxis==='a'?state.b:state.a;
-  const curve=[];for(let i=0;i<=90;i++){const x=loX+(hiX-loX)*i/90;const y=graphAxis==='a'?chartNumber(x,fixed):chartNumber(fixed,x);if(y!==null)curve.push({x,y});}
+  const curve=[];for(let i=0;i<=90;i++){const x=loX+(hiX-loX)*i/90;const y=graphAxis==='a'?chartNumber(x,fixed,state.c):chartNumber(fixed,x,state.c);if(y!==null)curve.push({x,y});}
   if(!curve.length){ctx.fillStyle='#aebdca';ctx.textAlign='center';ctx.font='12px system-ui';ctx.fillText(lang==='si'?'මෙම ප්‍රතිඵලය සංකේතාත්මකය; සමීකරණය සහ ප්‍රතිඵලය බලන්න':'This output is symbolic; use the equation and result display.',W/2,H/2);return;}
   let minY=Math.min(...curve.map(q=>q.y)),maxY=Math.max(...curve.map(q=>q.y));
-  for(const q of savedReadings){const y=chartNumber(q.a,q.b);if(y!==null){minY=Math.min(minY,y);maxY=Math.max(maxY,y);}}
+  for(const q of savedReadings){const y=chartNumber(q.a,q.b,q.c);if(y!==null){minY=Math.min(minY,y);maxY=Math.max(maxY,y);}}
   const span=maxY-minY||Math.max(1,Math.abs(maxY)*.2),pad=span*.12;minY-=pad;maxY+=pad;
   const X=x=>x0+(x-loX)/(hiX-loX||1)*(x1-x0),Y=y=>y0-(y-minY)/(maxY-minY||1)*(y0-y1);
   for(let i=0;i<=4;i++){const y=y1+(y0-y1)*i/4;ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();const val=maxY-(maxY-minY)*i/4;ctx.fillText(fmt(val),x0-7,y+3);}
   for(let i=0;i<=5;i++){const x=x0+(x1-x0)*i/5;ctx.beginPath();ctx.moveTo(x,y1);ctx.lineTo(x,y0);ctx.stroke();}
   ctx.beginPath();ctx.strokeStyle='#4ba6ff';ctx.lineWidth=2.6;curve.forEach((q,i)=>{const x=X(q.x),y=Y(q.y);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke();
   // Mark the current operating point and recorded experiment readings.
-  const currentY=chartNumber(state.a,state.b),currentX=graphAxis==='a'?state.a:state.b;
+  const currentY=chartNumber(state.a,state.b,state.c),currentX=graphAxis==='a'?state.a:state.b;
   if(currentY!==null){ctx.beginPath();ctx.arc(X(currentX),Y(currentY),5.4,0,Math.PI*2);ctx.fillStyle='#f6bd65';ctx.fill();ctx.strokeStyle='#fff0d2';ctx.lineWidth=1.2;ctx.stroke();}
-  savedReadings.forEach((q)=>{const y=chartNumber(q.a,q.b);if(y===null)return;ctx.beginPath();ctx.arc(X(graphAxis==='a'?q.a:q.b),Y(y),4,0,Math.PI*2);ctx.fillStyle='#9b8cff';ctx.fill();ctx.strokeStyle='#e9e3ff';ctx.lineWidth=1;ctx.stroke();});
+  savedReadings.forEach((q)=>{const y=chartNumber(q.a,q.b,q.c);if(y===null)return;ctx.beginPath();ctx.arc(X(graphAxis==='a'?q.a:q.b),Y(y),4,0,Math.PI*2);ctx.fillStyle='#9b8cff';ctx.fill();ctx.strokeStyle='#e9e3ff';ctx.lineWidth=1;ctx.stroke();});
   ctx.textAlign='center';ctx.fillStyle='#a9bac8';ctx.font='9px system-ui';
   for(let i=0;i<=5;i++){const x=loX+(hiX-loX)*i/5;ctx.fillText(fmt(x),X(x),H-17);}
   const axisName=graphAxis==='a'?(lang==='si'?(data.aLabelSi||'A'):(data.aLabel||'A')):(lang==='si'?(data.bLabelSi||'B'):(data.bLabel||'B'));
@@ -386,16 +387,18 @@ function renderReadings(){
     const row=document.createElement('div');row.className='reading-row';
     const a=document.createElement('span');a.textContent=`${lang==='si'?(data.aLabelSi||'A'):(data.aLabel||'A')}: ${fmt(q.a)}`;
     const b=document.createElement('span');b.textContent=`${lang==='si'?(data.bLabelSi||'B'):(data.bLabel||'B')}: ${fmt(q.b)}`;
+    row.append(a,b);
+    if(data.cLabel){const cc=document.createElement('span');cc.textContent=`${lang==='si'?(data.cLabelSi||'C'):data.cLabel}: ${fmt(q.c)} ${formatPowers(data.cUnit||'')}`;row.append(cc);}
     const result=document.createElement('strong');result.textContent=fmt(q.result);
     const remove=document.createElement('button');remove.type='button';remove.textContent='×';remove.title=lang==='si'?'මෙම අගය ඉවත් කරන්න':'Remove this reading';remove.addEventListener('click',()=>{savedReadings.splice(index,1);renderReadings();drawGraph();playUISound('remove');});
-    row.append(a,b,result,remove);mount.append(row);
+    row.append(result,remove);mount.append(row);
   });
   drawGraph();
 }
 function setStateAndControls(next){
   state={...state,...next};
-  for(const k of ['a','b']){const range=$(`range-${k}`),read=$(`read-${k}`);if(range)range.value=String(state[k]);if(read)read.textContent=`${fmt(state[k])} ${formatPowers(k==='a'?(data.aUnit||''):(data.bUnit||''))}`;}
-  document.querySelectorAll('[data-preset]').forEach(x=>x.classList.toggle('active',x.dataset.preset==='default'&&Number(state.a)===Number(D[0])&&Number(state.b)===Number(D[1])));
+  for(const k of (data.cLabel?['a','b','c']:['a','b'])){const range=$(`range-${k}`),read=$(`read-${k}`),unit=k==='a'?(data.aUnit||''):k==='b'?(data.bUnit||''):(data.cUnit||'');if(range)range.value=String(state[k]);if(read)read.textContent=`${fmt(state[k])} ${formatPowers(unit)}`;}
+  document.querySelectorAll('[data-preset]').forEach(x=>x.classList.toggle('active',x.dataset.preset==='default'&&Number(state.a)===Number(D[0])&&Number(state.b)===Number(D[1])&&(!data.cLabel||Number(state.c)===Number(D[2]??90))));
   refresh();
 }
 function syncFull(){
@@ -458,7 +461,7 @@ try {
 }
 refresh();renderReadings();
 $('resetBtn').addEventListener('click',()=>{
-  state={a:Number(D[0]),b:Number(D[1])};running=true;animationSpeed=1;
+  state={a:Number(D[0]),b:Number(D[1]),...(data.cLabel?{c:Number(D[2]??90)}:{})};running=true;animationSpeed=1;
   if(simulation?.reset)simulation.reset();
   simulation?.resetView?.();
   simulation?.setState({...state,running,speed:animationSpeed});
@@ -478,19 +481,19 @@ $('fullBtn').addEventListener('click',()=>{toggleFull();playUISound('fullscreen'
 document.addEventListener('fullscreenchange',syncFull);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('stage').classList.contains('fallback-fullscreen')){$('stage').classList.remove('fallback-fullscreen');syncFull();}});
 $('langBtn').addEventListener('click',()=>{lang=lang==='en'?'si':'en';try{localStorage.setItem('phy-lang',lang);}catch(_){}applyLanguage();applyControlLanguage();renderReadings();refresh();playUISound('language');try{parent.postMessage({type:'phy-language-change',language:lang},'*')}catch(_){} });
 $('recordBtn').addEventListener('click',()=>{
-  savedReadings.push({a:state.a,b:state.b,result:displayValue(state.a,state.b)});
+  savedReadings.push({a:state.a,b:state.b,...(data.cLabel?{c:state.c}:{}),result:displayValue(state.a,state.b,state.c)});
   if(savedReadings.length>MAX_SAVED_READINGS)savedReadings.shift();
   renderReadings();playUISound('record');
 });
 $('clearReadingsBtn').addEventListener('click',()=>{savedReadings=[];renderReadings();playUISound('clear');});
 document.querySelectorAll('[data-graph-axis]').forEach(btn=>btn.addEventListener('click',()=>{graphAxis=btn.dataset.graphAxis==='b'?'b':'a';drawGraph();playUISound(graphAxis==='a'?'graphA':'graphB');}));
 document.querySelectorAll('[data-preset]').forEach(btn=>btn.addEventListener('click',()=>{
-  const preset=btn.dataset.preset;const next=preset==='low'?{a:Number(R[0]),b:Number(R[3])}:preset==='high'?{a:Number(R[1]),b:Number(R[4])}:{a:Number(D[0]),b:Number(D[1])};
+  const preset=btn.dataset.preset;const next=preset==='low'?{a:Number(R[0]),b:Number(R[3]),...(data.cLabel?{c:Number(R[6])}:{})}:preset==='high'?{a:Number(R[1]),b:Number(R[4]),...(data.cLabel?{c:Number(R[7])}:{})}:{a:Number(D[0]),b:Number(D[1]),...(data.cLabel?{c:Number(D[2]??90)}:{})};
   setStateAndControls(next);document.querySelectorAll('[data-preset]').forEach(x=>x.classList.toggle('active',x===btn));playUISound(preset==='low'?'presetLow':preset==='high'?'presetHigh':'presetDefault');
 }));
 document.querySelectorAll('[data-nudge]').forEach(btn=>btn.addEventListener('click',()=>{
-  const [key,dir]=btn.dataset.nudge.split(':');const off=key==='a'?0:3,step=Number(R[off+2])||.1,min=Number(R[off]),max=Number(R[off+1]);
-  const next={...state,[key]:Math.max(min,Math.min(max,Number((state[key]+Number(dir)*step).toFixed(8))))};setStateAndControls(next);playUISound(key==='a'?(Number(dir)<0?'nudgeAMinus':'nudgeAPlus'):(Number(dir)<0?'nudgeBMinus':'nudgeBPlus'));
+  const [key,dir]=btn.dataset.nudge.split(':');const off=key==='a'?0:key==='b'?3:6,step=Number(R[off+2])||.1,min=Number(R[off]),max=Number(R[off+1]);
+  const next={...state,[key]:Math.max(min,Math.min(max,Number((state[key]+Number(dir)*step).toFixed(8))))};setStateAndControls(next);playUISound(key==='a'?(Number(dir)<0?'nudgeAMinus':'nudgeAPlus'):key==='b'?(Number(dir)<0?'nudgeBMinus':'nudgeBPlus'):'sliderC');
 }));
 document.querySelectorAll('[data-speed]').forEach(btn=>btn.addEventListener('click',()=>{
   animationSpeed=Number(btn.dataset.speed)||1;simulation?.setSpeed?.(animationSpeed);simulation?.setState({speed:animationSpeed});

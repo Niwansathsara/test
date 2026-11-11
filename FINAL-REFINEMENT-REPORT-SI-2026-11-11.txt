@@ -1,0 +1,53 @@
+PHY TOOLS – අවසන් Refinement වාර්තාව
+දිනය: 2026-11-11
+මෙම package එක භාවිත කළ යුත්තේ TEST repository එකේ පමණි.
+
+1. Simulator controls / stage layout
+- A/B/C slider අගයන් සහ + / − පාලක එකම control row එකේ පවතින ලෙස responsive layout සකස් කළා.
+- කුඩා තිරවල control label එක සහ +/- row එක පිරිසිදුව wrap වෙන ලෙස සකස් කළා.
+- Simulator panel/controls සඳහා අනිසි overflow clipping අඩු කළා.
+- පෙර ඉවත් කළ අමතර side indicator bars නැවත එකතු කළේ නැහැ.
+
+2. Slider එකට අදාළ 3D apparatus response
+- Relative Motion: A සහ B වස්තු වෙන වෙනම signed velocity අනුව ගමන් කරයි.
+- Moving Man / Motion Graph: velocity × time අනුව 3D object එකේ පිහිටීම වෙනස් වේ.
+- Momentum: mass අනුව object size; velocity අනුව චලනය සහ momentum arrow වෙනස් වේ.
+- Collision Lab: masses අනුව වස්තු ප්‍රමාණ; elastic collision අවසාන වේග අනුව vector arrows වෙනස් වේ.
+- Gravity tools: mass සහ orbital radius නිවැරදි input label අනුව planet/moon size සහ orbit radius පාලනය කරයි.
+- Surface Tension: contact line length අනුව surface loop ප්‍රමාණය; surface tension සහ දිග අනුව force arrows වෙනස් වේ.
+- Viscosity: upper fluid layer movement velocity gradient අනුව; opposing shear indication viscosity අනුව වෙනස් වේ.
+- Pressure: piston area අනුව පළල; applied force අනුව force arrow; F/A අනුව gauge response වෙනස් වේ.
+- Specific Heat: mass අනුව water volume; temperature change අනුව thermometer සහ water colour වෙනස් වේ.
+- Phase Change: mass සහ latent heat දෙකම melting rate සහ ice/water state වෙනස් කරයි.
+- Capacitor: plate area/separation හෝ capacitance/voltage අනුව plate dimensions, spacing සහ field arrows වෙනස් වේ.
+- Radioactive decay/dating: remaining fraction අනුව nucleons දෘශ්‍යමාන වීම; half-life අනුව decay animation rate වෙනස් වේ.
+- Nuclear fission/binding: nucleon number සහ mass defect අනුව nucleus/fragment scale සහ energy indication වෙනස් වේ.
+- X-ray production: tube voltage සහ Planck constant අනුව wavelength representation, photon output සහ target glow වෙනස් වේ.
+- Gas models: chamber volume slider අනුව piston සහ gas volume වෙනස් වේ; pressure gauge එකක්ද ඇතුළත් කළා.
+
+3. Visual / navigation refinements
+- Main page syllabus units grid: desktop columns 4.
+- Main page All Simulation Tools grid: desktop columns 3.
+- Category page tool cards: desktop columns 3.
+- Main/category tool titles සඳහා සුදු text contrast.
+- Reset filters button event handler main සහ category pages දෙකේම තහවුරු කළා.
+- Boyle’s Law temperature range 100–1000 K; default 800 K; 1000 K preset ඇතුළත්.
+- Boyle’s Law gas particle animation code standalone page එකේ පවතී.
+
+4. Code checks
+- 130 tools; 10 syllabus units; 52 visual model types.
+- සියලු JavaScript files Node module syntax check සමත්.
+- HTML pages වල local CSS/JS references සියල්ල තිබෙන බව පරීක්ෂා කළා.
+- Catalogue IDs unique සහ control ranges present බව පරීක්ෂා කළා.
+- Boyle’s Law temperature settings, grid columns, title colour, filter reset handlers, and no legacy inputMeters were checked.
+
+5. Testing limitation
+- Browser runtime smoke test එක මෙම container environment එකේ host policy මගින් අවහිර වූ නිසා Chrome/WebGL render එක සජීවීව තහවුරු කළ නොහැකි වුණා.
+- ඒ නිසා 130 simulations සියල්ලම browser එකකින් එකින් එක පරීක්ෂා කළ බවක් මෙහි ප්‍රකාශ නොකරයි.
+- මෙම පරීක්ෂණ code/catalogue/static references පරීක්ෂණ වේ. Physical formula/assumption සියල්ල විශේෂඥ review එකක් ලැබූ බවක් අදහස් නොවේ.
+
+UPLOAD
+- ZIP එක Extract කරන්න.
+- Extract වූ PHY-Tools-Test-Final-Refinement-2026-11-11 folder එකේ ඇතුළත files/folders සියල්ල Niwansathsara/test repository root එකට upload කර පරණ package files replace කරන්න.
+- Commit changes කරන්න.
+- Original PHY-tools repository එකට තවම upload නොකරන්න.
