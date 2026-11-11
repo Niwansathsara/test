@@ -228,7 +228,7 @@ function buildModel(kind,g,d,meta={}){
  }else if(kind==="oscillator"){
   const anchor=box(g,[-1.58,0,0],[.16,1.1,.85],0x687786,.25,.78);d.mass=box(g,[.65,-.15,0],[.62,.62,.62],0x1d75d7,.22,.58);d.spring=line(g,coilPoints(-1.48,.33,2.0,.12),0xc1ccd7,1,.035);d.massAnchor=anchor;
   if(Math.abs((d.spring.geometry?.parameters?.radius)||.035)<0){}
-  if(kind==="oscillator")ring(g,.8,.018,0x3d8fff,[.65,-.15,0],[Math.PI/2,0,0]);
+  if(kind==="oscillator")d.oscRing=ring(g,.8,.018,0x3d8fff,[.65,-.15,0],[Math.PI/2,0,0]);
  }else if(kind==="waves"){
   const points=[];for(let i=0;i<=100;i++){const x=-2+i*4/100;points.push(new THREE.Vector3(x,0,0));}const geo=new THREE.BufferGeometry().setFromPoints(points);d.wave=new THREE.Line(geo,new THREE.LineBasicMaterial({color:0x57b2ff}));g.add(d.wave);d.waveMaterial=d.wave.material;d.nodeLine=box(g,[0,-.4,0],[4.1,.025,.045],0x657587,.35,.6);d.marker=ball(g,[0,0,0],0x79df9b,.1,.3);
   for(let i=0;i<9;i++)box(g,[-1.8+i*.45,-.5,0],[.012,.12,.08],0xa4b4c4,.4,.4);
@@ -395,17 +395,113 @@ function buildModel(kind,g,d,meta={}){
  }else if(kind==="circular-motion"){
   box(g,[0,-.62,0],[3.4,.12,1.1],0x26333e,.34,.6);d.circularPivot=ball(g,[0,.05,0],0xe4edf5,.12,.5);d.circularOrbit=ring(g,1.1,.025,0x6ebaff,[0,.05,0],[Math.PI/2,0,0]);d.circularMass=ball(g,[1.1,.05,0],0xf1bd68,.17,.25);d.circularRadius=line(g,[[0,.05,0],[1.1,.05,0]],0x74dca1,.85,.022);d.circularArrow=arrow(g,[0,.05,0],[0,.05,0],0x6fbfff);
  }
+ // Live parameter gauges are mounted on the front edge of every apparatus.
+ // This provides a visible 3D response for tools whose main apparatus is mostly static.
+ d.inputMeters=[];
+ for(let i=0;i<2;i++){
+  const x=i===0?-1.55:1.55,color=i===0?0x52b7ff:0xffb36d;
+  box(g,[x,-.12,1.02],[.16,.86,.09],0x263544,.25,.5);
+  const fill=box(g,[x,-.51,1.085],[.085,.72,.045],color,.22,.25);
+  const marker=ball(g,[x,-.51,1.14],color,.09,.18);
+  d.inputMeters.push({fill,marker,color,baseY:-.51});
+ }
 }
 function coilPoints(startY,height,length,radius){const pts=[];const n=150;for(let i=0;i<=n;i++){const t=i/n,x=-1.45+length*t,ang=t*2*Math.PI*11;pts.push([x,startY+Math.sin(ang)*radius,Math.cos(ang)*radius]);}return pts;}
 function updateModel(kind,d,s,t,dt,meta={}){
  const av=Number(s.a),bv=Number(s.b);const a=Number.isFinite(av)?av:1,b=Number.isFinite(bv)?bv:1;
+ const ranges=meta.ranges||[0,1,.01,0,1,.01];
+ const norm=(v,min,max)=>THREE.MathUtils.clamp((v-Number(min))/(Number(max)-Number(min)||1),0,1);
+ if(d.inputMeters){
+  const values=[norm(a,ranges[0],ranges[1]),norm(b,ranges[3],ranges[4])];
+  d.inputMeters.forEach((m,i)=>{const q=values[i],height=.055+.665*q;m.fill.scale.y=Math.max(.06,q);m.fill.position.y=m.baseY+height/2;m.marker.position.y=m.baseY+height;m.marker.scale.setScalar(.075+.025*q);});
+ }
  if(kind==="measurement"){if(d.cursor)d.cursor.position.x=THREE.MathUtils.clamp(-1.8+(a%40)*.085,-1.8,1.8);}
  if(kind==="vector"){const x=THREE.MathUtils.clamp(a/5,-1.5,1.5),y=THREE.MathUtils.clamp(b/5,-1.3,1.3);if(d.v1){d.v1.setDirection(new THREE.Vector3(Math.sign(x)||1,0,0));d.v1.setLength(Math.abs(x),.16,.09)}if(d.v2){d.v2.position.set(x,0,0);d.v2.setDirection(new THREE.Vector3(0,Math.sign(y)||1,0));d.v2.setLength(Math.abs(y),.16,.09)}if(d.result){d.result.setDirection(new THREE.Vector3(x,y,0).normalize());d.result.setLength(Math.hypot(x,y),.16,.09)}}
- if(kind==="motion"||kind==="projectile"){const speed=THREE.MathUtils.clamp(a/10,.08,2.8);if(d.moving){const q=(t*speed)%1;if(kind==="projectile"){const x=-1.7+q*3.4,y=-.55+1.45*4*q*(1-q);d.moving.position.set(x,y,0);}else d.moving.position.x=-1.65+q*3.3;}}
- if(kind==="forces"||kind==="energy"){if(d.block){d.block.scale.x=THREE.MathUtils.clamp(a/4,.4,1.8);}}
- if(kind==="rotation"||kind==="torque"){if(d.disk)d.disk.rotation.y=t*THREE.MathUtils.clamp(b/3,.3,3);if(d.handle)d.handle.rotation.y=t*.2;}
- if(kind==="oscillator"){if(d.mass)d.mass.position.y=-.15+Math.sin(t*Math.sqrt(Math.max(.2,b/Math.max(.2,a))))*.32;}
- if(kind==="waves"){if(d.wave){const pos=d.wave.geometry.attributes.position;const amp=THREE.MathUtils.clamp(a/10,.08,.9),freq=THREE.MathUtils.clamp(b/3,.2,4);for(let i=0;i<pos.count;i++){const x=-2+i*4/(pos.count-1);pos.setXYZ(i,x,amp*Math.sin(x*freq*2.8-t*freq*2.0),0);}pos.needsUpdate=true;d.wave.geometry.computeVertexNormals();if(d.marker){const x=Math.sin(t*.6)*1.85;d.marker.position.set(x,amp*Math.sin(x*freq*2.8-t*freq*2),0);}}}
+ if(kind==="motion"||kind==="projectile"){
+  const speed=THREE.MathUtils.clamp(.35+Math.abs(a)/Math.max(1,Number(ranges[1])),.35,2.8);
+  if(d.moving){const q=(t*speed)%1;if(kind==="projectile"){
+    const angle=THREE.MathUtils.clamp(b,.5,89.5)*Math.PI/180;
+    const speedNorm=norm(a,ranges[0],ranges[1]);
+    const apex=THREE.MathUtils.clamp(.22+1.12*Math.sin(angle)**2*(.45+.75*speedNorm),.18,1.48);
+    const xSpan=THREE.MathUtils.clamp(.62+.38*Math.sin(2*angle),.62,1);
+    const x=-1.7+q*3.4*xSpan,y=-.55+4*apex*q*(1-q);
+    d.moving.position.set(x,y,0);
+    const key=`${a.toFixed(4)}:${b.toFixed(4)}`;
+    if(d.arc && d._trajectoryKey!==key){d._trajectoryKey=key;const pts=[];for(let j=0;j<=60;j++){const u=j/60;pts.push(new THREE.Vector3(-1.7+u*3.4*xSpan,-.55+4*apex*u*(1-u),0));}d.arc.geometry.dispose();d.arc.geometry=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),100,.016,8,false);}
+    if(d.launch){const dir=new THREE.Vector3(Math.cos(angle),Math.sin(angle),0);d.launch.setDirection(dir);d.launch.setLength(.65,.16,.09);}
+   }else d.moving.position.x=-1.65+q*3.3;}
+ }
+ if(kind==="forces"||kind==="energy"){
+  if(d.block){d.block.scale.x=THREE.MathUtils.clamp(.55+norm(a,ranges[0],ranges[1])*1.1,.45,1.8);d.block.scale.z=THREE.MathUtils.clamp(.78+norm(b,ranges[3],ranges[4])*.45,.7,1.25);}
+  if(d.arrowA)d.arrowA.setLength(.18+.95*norm(a,ranges[0],ranges[1]),.16,.09);
+  if(d.arrowB)d.arrowB.setLength(.18+.95*norm(b,ranges[3],ranges[4]),.16,.09);
+ }
+ if(kind==="rotation"||kind==="torque"){
+  const id=meta.id||'',na=norm(a,ranges[0],ranges[1]),nb=norm(b,ranges[3],ranges[4]);
+  if(kind==="torque"){
+   const torque=Math.abs(a*b),drive=THREE.MathUtils.clamp(.25+Math.sqrt(torque/Math.max(1,Number(ranges[1])*Number(ranges[4])))*3,.25,3.5);
+   const angle=t*drive*.12*Math.sign(a*b||1);
+   if(d.disk)d.disk.rotation.z=angle;
+   if(d.handle){const radius=.42+.62*nb;d.handle.position.set(radius*Math.cos(angle),.12+radius*Math.sin(angle),0);d.handle.rotation.z=angle;d.handle.scale.x=.55+1.2*nb;}
+   if(d.force){d.force.position.set((.72+nb*.55)*Math.cos(angle),.12+(.72+nb*.55)*Math.sin(angle),0);d.force.setDirection(new THREE.Vector3(-Math.sin(angle),Math.cos(angle),0));d.force.setLength(.18+1.1*na,.16,.09);}
+  }else if(id.includes('moment-of-inertia')){
+   const radiusScale=THREE.MathUtils.clamp(.58+nb*1.0,.58,1.58),thicknessScale=THREE.MathUtils.clamp(.58+na*.72,.58,1.3);
+   if(d.disk){d.disk.scale.set(radiusScale,thicknessScale,radiusScale);d.disk.rotation.z=t*.9;}
+   if(d.handle)d.handle.scale.x=.55+1.1*nb;
+  }else if(id.includes('rotational-dynamics')){
+   const alpha=b,angularAngle=.5*alpha*t*t;
+   if(d.disk)d.disk.rotation.z=angularAngle;
+   if(d.handle){const radius=.72;d.handle.position.set(radius*Math.cos(angularAngle),.12+radius*Math.sin(angularAngle),0);d.handle.rotation.z=angularAngle;}
+   if(d.disk){const inertiaScale=THREE.MathUtils.clamp(.8+Math.sqrt(na)*.45,.8,1.25);d.disk.scale.set(inertiaScale,1,inertiaScale);}
+  }else if(id.includes('angular-momentum')){
+   if(d.disk){d.disk.rotation.z=t*THREE.MathUtils.clamp(Math.abs(b),.15,30)*Math.sign(b||1)*.35;const inertiaScale=THREE.MathUtils.clamp(.68+Math.sqrt(na)*.48,.68,1.5);d.disk.scale.set(inertiaScale,THREE.MathUtils.clamp(.65+na*.7,.65,1.35),inertiaScale);}
+   if(d.handle){const angle=d.disk?.rotation.z||0,radius=.72;d.handle.position.set(radius*Math.cos(angle),.12+radius*Math.sin(angle),0);d.handle.rotation.z=angle;}
+  }else{
+   if(d.disk)d.disk.rotation.z=t*THREE.MathUtils.clamp(Math.abs(b)/3,.3,3)*Math.sign(b||1);
+   if(d.handle){const angle=t*.2,radius=.72;d.handle.position.set(radius*Math.cos(angle),.12+radius*Math.sin(angle),0);d.handle.rotation.z=angle;}
+  }
+ }
+ if(kind==="oscillator"){
+  const id=meta.id||'';let amplitude=.32,omega=2.2;
+  if(id.includes('damped-oscillation')){
+   amplitude=.32*Math.exp(-Math.max(0,a)*Math.max(0,b));omega=2.6;
+  }else if(id.includes('forced-oscillation')||id.includes('resonance')){
+   const ratio=Math.max(.001,a/Math.max(.001,b)),Q=5;
+   const response=1/Math.sqrt((1-ratio*ratio)**2+(ratio/Q)**2);
+   amplitude=.32*THREE.MathUtils.clamp(response/5,.06,1.55);
+   omega=THREE.MathUtils.clamp(a*.9,.35,18);
+  }else{
+   // Mass-spring: angular frequency follows ω = √(k/m).
+   omega=THREE.MathUtils.clamp(Math.sqrt(Math.max(.001,b)/Math.max(.001,a)),.35,12);
+  }
+  const displacement=Math.sin(t*omega)*amplitude;
+  if(d.mass){d.mass.position.x=.65+displacement;d.mass.position.y=-.15;}
+  if(d.spring){const endX=(d.mass?.position.x??.65)-.31,scaleX=THREE.MathUtils.clamp((endX+1.45)/2,.35,1.35);d.spring.scale.x=scaleX;d.spring.position.x=-1.45+1.45*scaleX;}
+  if(d.oscRing){d.oscRing.position.x=d.mass?.position.x??.65;d.oscRing.position.y=-.15;}
+ }
+ if(kind==="waves"&&d.wave){
+  const id=meta.id||'',pos=d.wave.geometry.attributes.position;
+  const logNorm=(v,min,max)=>THREE.MathUtils.clamp((Math.log(Math.max(v,1e-30))-Math.log(Math.max(min,1e-30)))/(Math.log(Math.max(max,min*1.000001))-Math.log(Math.max(min,1e-30))),0,1);
+  let lambdaVisual=2.2,omegaVisual=2.2,travelSpeed=1;
+  if(id==='wave-on-a-string'){
+   const waveSpeed=Math.sqrt(Math.max(1e-12,a)/Math.max(1e-12,b));
+   const limits=[Math.sqrt(Math.max(1e-12,ranges[0])/Math.max(1e-12,ranges[4])),Math.sqrt(Math.max(1e-12,ranges[1])/Math.max(1e-12,ranges[3]))];
+   omegaVisual=.6+4.8*logNorm(waveSpeed,limits[0],limits[1]);lambdaVisual=2.25;travelSpeed=waveSpeed;
+  }else if(id==='sound-waves-simulator'||id==='radio-waves-electromagnetic-fields'){
+   const actualLambda=Math.max(1e-30,b/Math.max(a,1e-30));
+   const lo=ranges[3]/Math.max(ranges[1],1e-30),hi=ranges[4]/Math.max(ranges[0],1e-30);
+   lambdaVisual=.42+3.05*logNorm(actualLambda,lo,hi);
+   omegaVisual=.65+4.8*logNorm(a,ranges[0],ranges[1]);travelSpeed=b;
+  }else{
+   lambdaVisual=.42+3.05*norm(b,ranges[3],ranges[4]);
+   omegaVisual=.65+4.8*logNorm(a,ranges[0],ranges[1]);travelSpeed=a*b;
+  }
+  const k=2*Math.PI/Math.max(.3,lambdaVisual),amp=.55,phaseAt=x=>k*x-omegaVisual*t;
+  for(let i=0;i<pos.count;i++){const x=-2+i*4/(pos.count-1);pos.setXYZ(i,x,amp*Math.sin(phaseAt(x)),0);}
+  pos.needsUpdate=true;d.wave.geometry.computeBoundingSphere();
+  if(d.marker){const x=Math.sin(t*.6)*1.85;d.marker.position.set(x,amp*Math.sin(phaseAt(x)),0);}
+  if(d.waveMaterial)d.waveMaterial.color.setHex(id==='wave-on-a-string'?0x70d7b0:(id.includes('sound')?0x79c8ff:0x57b2ff));
+ }
  if(kind==="gas"){
   const id=meta.id||'';let volume=1,temp=1;
   if(id==='gas-properties'){volume=THREE.MathUtils.clamp(b/24.6,.25,2.5);temp=1;}
@@ -451,15 +547,51 @@ function updateModel(kind,d,s,t,dt,meta={}){
   if(d.stateIndicator){d.stateIndicator.material.color.setHex(phase==="solid"?0x6eb9ff:phase==="liquid"?0x58d5c6:0xffa65f);d.stateIndicator.scale.setScalar(phase==="gas"?1.2:phase==="liquid"?1:.8);}
  }
  
- if(kind==="gravity"){if(d.moon){const r=1.5;d.moon.position.set(Math.cos(t*.7)*r,Math.sin(t*.7)*r*.15,Math.sin(t*.7)*r);}}
+ if(kind==="gravity"){
+  const massN=norm(a,ranges[0],ranges[1]),radiusN=norm(b,ranges[3],ranges[4]);
+  const planetScale=.72+.62*massN,orbitRadius=.9+1.05*radiusN;
+  if(d.planet)d.planet.scale.setScalar(planetScale);
+  if(d.moon){const angle=t*(.38+.42*(1-radiusN));d.moon.position.set(Math.cos(angle)*orbitRadius,Math.sin(angle)*orbitRadius*.15,Math.sin(angle)*orbitRadius);}
+  if(d.orbit){d.orbit.scale.setScalar(orbitRadius/1.5);}
+ }
  if(kind==="electric"){if(d.chargeA)d.chargeA.scale.setScalar(THREE.MathUtils.clamp(Math.abs(a)/3,.7,1.7));if(d.chargeB)d.chargeB.scale.setScalar(THREE.MathUtils.clamp(Math.abs(b)/3,.7,1.7));}
- if(kind==="magnetic"){for(const f of d.fields||[])f.rotation.x=Math.sin(t*.4)*.035;}
- if(kind==="circuit"){if(d.bulb){d.bulb.material.emissiveIntensity=THREE.MathUtils.clamp(a/12,.15,2.4);d.bulb.scale.setScalar(.9+Math.min(1,a/30)*.3);}}
- if(kind==="semiconductor"){if(d.bulb)d.bulb.material.emissiveIntensity=THREE.MathUtils.clamp(a/1.2,.15,1.8);}
- if(kind==="solids"){if(d.sample){d.sample.scale.y=THREE.MathUtils.clamp(1.0-a/900,.55,1.05);}}
- if(kind==="fluid"){if(d.water){d.water.scale.y=THREE.MathUtils.clamp(b/3,.35,1.6);d.water.position.y=-.74+(d.water.scale.y*.5);}for(const p of d.bubbles||[]){p.position.y+=dt*.22;if(p.position.y>.75)p.position.y=-.48;}}
+ if(kind==="magnetic"){
+  const strength=.12+.88*norm(a,ranges[0],ranges[1])*norm(b,ranges[3],ranges[4]);
+  for(const f of d.fields||[]){f.rotation.x=Math.sin(t*.4)*.035;f.material.opacity=.18+strength*.78;f.scale.y=.72+strength*.42;}
+ }
+ if(kind==="circuit"){
+  let power=0;const calc=meta.calcType||'';
+  if(calc==='ohms-law')power=a*a/Math.max(.01,b);
+  else if(calc==='ohms-voltage')power=a*a*Math.max(.01,b);
+  else if(calc==='electric-power'||calc==='electric-energy')power=a*b;
+  else if(calc==='ac-rms')power=a*a/2;
+  else if(calc==='half-wave-average'||calc==='full-wave-average')power=a*Math.max(.01,b)/Math.PI;
+  else power=Math.abs(a*b);
+  const intensity=THREE.MathUtils.clamp(Math.log10(1+Math.abs(power))*.72,.08,2.1);
+  if(d.bulb){d.bulb.material.emissiveIntensity=intensity;d.bulb.scale.setScalar(.78+Math.min(1.2,intensity)*.22);}
+  if(d.resistor)d.resistor.material.color.setHSL(.11+norm(b,ranges[3],ranges[4])*.08,.42,.38);
+ }
+ if(kind==="semiconductor"){
+  const forward=norm(a,ranges[0],ranges[1]),secondary=norm(b,ranges[3],ranges[4]);
+  const level=THREE.MathUtils.clamp(.08+1.9*forward*(.55+.65*secondary),.08,2.2);
+  if(d.bulb){d.bulb.material.emissiveIntensity=level;d.bulb.scale.setScalar(.78+level*.18);}
+  (d.fields||[]).forEach((f,i)=>{f.material.opacity=.2+.7*secondary;});
+ }
+ if(kind==="solids"){
+  const loadN=norm(a,ranges[0],ranges[1]),sizeN=norm(b,ranges[3],ranges[4]);
+  if(d.sample){d.sample.scale.y=THREE.MathUtils.clamp(1.02-loadN*.34,.58,1.08);d.sample.scale.x=.78+.48*sizeN;}
+  if(d.loadArrow)d.loadArrow.setLength(.18+.95*loadN,.16,.09);
+  if(d.baseArrow)d.baseArrow.setLength(.18+.72*loadN,.16,.09);
+ }
+ if(kind==="fluid"){
+  const level=.35+norm(b,ranges[3],ranges[4])*1.2,flow=.08+norm(a,ranges[0],ranges[1])*.95;
+  if(d.water){d.water.scale.y=level;d.water.position.y=-.94+level*.5;}
+  if(d.waterSurface)d.waterSurface.position.y=-.94+level;
+  for(const p of d.bubbles||[]){p.position.y+=dt*flow;if(p.position.y>(-.94+level*.88))p.position.y=-.78;}
+ }
  if(kind==="atomic"||kind==="nuclear"){
-  for(let i=0;i<3;i++){const r=.85+i*.4,angle=t*(.7+i*.23)+i*2.1,e=d[`electron${i}`];if(e)e.position.set(Math.cos(angle)*r,Math.sin(angle)*r*.55,Math.sin(angle)*r*.85);}
+  const orbitN=norm(a,ranges[0],ranges[1]),energyN=norm(b,ranges[3],ranges[4]);
+  for(let i=0;i<3;i++){const r=.58+i*.28+orbitN*.38,angle=t*(.45+energyN*.9+i*.17)+i*2.1,e=d[`electron${i}`],orb=d.orbits?.[i];if(e)e.position.set(Math.cos(angle)*r,Math.sin(angle)*r*.55,Math.sin(angle)*r*.85);if(orb)orb.scale.setScalar(r/(.85+i*.4));}
   if(d.decayType==='fission'){const q=(t%4)/4;if(d.fragmentA)d.fragmentA.position.set(-.45-q*1.1,.05+q*.22,0);if(d.fragmentB)d.fragmentB.position.set(.45+q*1.1,.05-q*.22,0);}
   else if(d.emitted){const q=(t%5)/5;d.emitted.position.set(.55+q*1.8,.2+Math.sin(q*Math.PI)*.45,0);if(d.secondaryEmitted)d.secondaryEmitted.position.set(.5+q*1.55,.35+Math.cos(q*Math.PI)*.22,.15);}
  }
@@ -473,22 +605,43 @@ function updateModel(kind,d,s,t,dt,meta={}){
  }
  if(kind==="doppler"){
   const vs=THREE.MathUtils.clamp(b,-100,100),direction=Math.sign(vs)||1,travel=((t*vs*.12)%3.2+3.2)%3.2-1.6;
+  const frequencyN=norm(a,ranges[0],ranges[1]),spacing=THREE.MathUtils.clamp(1.2-.82*frequencyN,.24,1.2);
   if(d.sourceCart)d.sourceCart.position.x=-.85+travel;if(d.sourceBeacon)d.sourceBeacon.position.x=-.85+travel;
   (d.wheels||[]).forEach((w,i)=>w.position.x=-1.08+i*.46+travel);
-  (d.wavefronts||[]).forEach((w,i)=>{const r=.18+((t*.45+w.phase)%1)*1.15;w.mesh.scale.setScalar(r/(.25+i*.24));w.mesh.position.x=-.85+travel-direction*((t*.45+w.phase)%1)*.4;});
+  (d.wavefronts||[]).forEach((w,i)=>{const phase=(t*(.22+frequencyN*.65)+w.phase)%1,r=.18+phase*1.15;w.mesh.scale.setScalar((r/(.25+i*.24))*spacing);w.mesh.position.x=-.85+travel-direction*phase*.4;});
  }
  if(kind==="wave-special"&&d.specialWave){const pos=d.specialWave.geometry.attributes.position,id=meta.id||'';const amp=.55;for(let i=0;i<pos.count;i++){const x=-1.9+i*3.8/(pos.count-1),u=(x+1.9)/3.8;let y=0;if(id.includes('standing')||id.includes('normal-modes')){const mode=THREE.MathUtils.clamp(Math.round(a),1,8),L=THREE.MathUtils.clamp(b,.2,5),w=mode*100/(2*L);y=amp*Math.sin(mode*Math.PI*u)*Math.cos(t*Math.min(8,w*.035));}else if(id.includes('interference')){const path=Math.max(0,a),lambda=Math.max(.01,b),k=2*Math.PI/lambda,phase=2*Math.PI*path/lambda;y=.5*(Math.sin(k*x-t*2)+Math.sin(k*x-t*2+phase));}else if(id.includes('beats')){const f1=Math.max(1,a),f2=Math.max(1,b),avg=(f1+f2)/2,beat=Math.abs(f1-f2);y=.55*Math.sin(x*2.2-t*Math.min(18,avg*.035))*Math.cos(t*Math.min(12,beat*.22));}else y=.55*Math.sin(x*2.6-t*1.5);pos.setY(i,y);}pos.needsUpdate=true;if(d.waveMarkerA)d.waveMarkerA.position.y=amp*Math.sin(t);if(d.waveMarkerB)d.waveMarkerB.position.y=-amp*Math.sin(t);}
  if(kind==="logic") {const A=a>=.5,B=b>=.5,isXor=(meta.id||'').includes('xor'),out=isXor?(A!==B):(A&&B);if(d.logicA)d.logicA.material.color.setHex(A?0x63d79b:0x536578);if(d.logicB)d.logicB.material.color.setHex(B?0x63d79b:0x536578);if(d.logicOut){d.logicOut.material.color.setHex(out?0x63e29c:0x536578);d.logicOut.material.emissive.setHex(out?0x126438:0x111820);d.logicOut.material.emissiveIntensity=out?1.0:.08;}}
- if(kind==="rectifier"&&d.rectWave){const pts=[];const full=(meta.id||'').includes('full-wave');for(let i=0;i<=80;i++){const x=-1.45+i*2.9/80,phase=i/80*Math.PI*4,raw=Math.sin(phase),y=(full?Math.abs(raw):Math.max(0,raw))*.52;pts.push(new THREE.Vector3(x,-.15+y,.47));}d.rectWave.geometry.dispose();d.rectWave.geometry=new THREE.BufferGeometry().setFromPoints(pts);}
- if(kind==="induction"){if(d.magnet){d.magnet.position.x=-1.15+Math.sin(t*1.25)*.68;d.magnet.rotation.z=Math.sin(t*1.25)*.08;}if(d.inducedArrow){const direction=Math.sin(t*1.25);d.inducedArrow.setLength(.25+Math.abs(direction)*.85,.15,.08);d.inducedArrow.setDirection(new THREE.Vector3(Math.sign(direction)||1,0,0));}}
+ if(kind==="rectifier"&&d.rectWave){
+  const pts=[],full=(meta.id||'').includes('full-wave'),amplitude=.12+.62*norm(a,ranges[0],ranges[1]),frequency=.5+norm(b,ranges[3],ranges[4])*3.5;
+  for(let i=0;i<=100;i++){const x=-1.45+i*2.9/100,phase=(i/100*Math.PI*4-t*frequency*1.6),raw=Math.sin(phase),y=(full?Math.abs(raw):Math.max(0,raw))*amplitude;pts.push(new THREE.Vector3(x,-.15+y,.47));}
+  const attr=d.rectWave.geometry.attributes.position;
+  if(attr && attr.count===pts.length){for(let i=0;i<pts.length;i++)attr.setXYZ(i,pts[i].x,pts[i].y,pts[i].z);attr.needsUpdate=true;d.rectWave.geometry.computeBoundingSphere();}
+  else {d.rectWave.geometry.dispose();d.rectWave.geometry=new THREE.BufferGeometry().setFromPoints(pts);}
+ }
+ if(kind==="induction"){
+  const turns=norm(a,ranges[0],ranges[1]),rate=.45+norm(b,ranges[3],ranges[4])*2.8,phase=t*rate;
+  if(d.magnet){d.magnet.position.x=-1.15+Math.sin(phase)*(.22+.55*rate/3.25);d.magnet.rotation.z=Math.sin(phase)*.08;}
+  if(d.inducedArrow){const direction=Math.cos(phase);d.inducedArrow.setLength(.18+Math.abs(direction)*(.3+turns*.85),.15,.08);d.inducedArrow.setDirection(new THREE.Vector3(Math.sign(direction)||1,0,0));}
+ }
  if(kind==="photon"){if(d.electron){const q=(t%2)/2;d.electron.position.set(.2+q*1.45,.08+Math.sin(q*Math.PI)*.85,0);}}
- if(kind==="capacitor"){const v=THREE.MathUtils.clamp(Math.abs(a)/12,.2,2.5);(d.fieldArrows||[]).forEach(ar=>ar.setLength(v*.34,.1,.06));if(d.plateA)d.plateA.material.color.setHex(a>=0?0x6da6d8:0xd58e68);}
+ if(kind==="capacitor"){
+  const v=THREE.MathUtils.clamp(Math.abs(a)/12,.2,2.5),gap=.45+.9*norm(b,ranges[3],ranges[4]);
+  if(d.plateA)d.plateA.position.x=-gap/2;if(d.plateB)d.plateB.position.x=gap/2;
+  (d.fieldArrows||[]).forEach(ar=>{ar.position.x=0;ar.setLength(v*.34,.1,.06);});
+  if(d.plateA)d.plateA.material.color.setHex(a>=0?0x6da6d8:0xd58e68);
+ }
  if(kind==="centre-mass"){const total=Math.max(.01,a+b),x=-1.25+2.5*b/total;if(d.massLeft)d.massLeft.scale.setScalar(THREE.MathUtils.clamp(.16+Math.sqrt(Math.max(a,.01))*.045,.16,.38));if(d.massRight)d.massRight.scale.setScalar(THREE.MathUtils.clamp(.16+Math.sqrt(Math.max(b,.01))*.045,.16,.38));if(d.cmMarker)d.cmMarker.position.x=THREE.MathUtils.clamp(x,-1.15,1.15);}
  if(kind==="pendulum"){const length=THREE.MathUtils.clamp(a,.25,1.35),gval=THREE.MathUtils.clamp(b,.5,30),period=2*Math.PI*Math.sqrt(length/gval),angle=.42*Math.sin(2*Math.PI*t/Math.max(period,.1));const pivot=new THREE.Vector3(0,1.0,0),bob=new THREE.Vector3(Math.sin(angle)*length,1.0-Math.cos(angle)*length,0);if(d.pendulumBob)d.pendulumBob.position.copy(bob);if(d.pendulumRod){const v=bob.clone().sub(pivot);d.pendulumRod.position.copy(pivot.clone().add(bob).multiplyScalar(.5));d.pendulumRod.scale.y=v.length();d.pendulumRod.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize());}}
  if(kind==="sound-intensity"){const r=THREE.MathUtils.clamp(b*.055,.18,1.65);if(d.soundReceiver)d.soundReceiver.position.x=-1.45+r;if(d.soundArrow){d.soundArrow.position.set(-1.45+r*.5,-.15,0);d.soundArrow.scale.x=r/1.8;}for(const q of d.soundRings||[]){const phase=(t*.6+q.phase)%1,rad=.18+phase*1.45;q.mesh.scale.setScalar(rad/.28);q.mesh.position.x=-1.45;}}
  if(kind==="charged-particle"){const mass=Math.max(a,1e-30),B=Math.max(b,1e-5),radius=THREE.MathUtils.clamp((mass*1e6/(1.602176634e-19*B))*2.5,.25,1.45),angle=t*1.8;if(d.chargePath){d.chargePath.scale.setScalar(radius/.8);}if(d.chargeTrail)d.chargeTrail.scale.setScalar(radius/.8);if(d.chargeParticle)d.chargeParticle.position.set(radius*Math.cos(angle),.15+radius*Math.sin(angle),0);}
  if(kind==="generator"){const omega=THREE.MathUtils.clamp(a,0,500),turns=THREE.MathUtils.clamp(b,1,1000);if(d.generatorCoil)d.generatorCoil.rotation.y=t*omega*.08;if(d.generatorLamp)d.generatorLamp.material.emissiveIntensity=.08+Math.abs(Math.sin(t*omega*.08))*Math.min(2,turns/80);}
- if(kind==="transformer"){const ratio=THREE.MathUtils.clamp(b,.01,20);(d.fluxLines||[]).forEach((l,i)=>l.material.opacity=.25+.65*Math.abs(Math.sin(t*2+i*.3)));(d.secondaryCoils||[]).forEach((c,i)=>c.scale.setScalar(THREE.MathUtils.clamp(.8+ratio*.04,.8,1.5)));}
+ if(kind==="transformer"){
+  const ratio=THREE.MathUtils.clamp(b,.01,20),voltageN=norm(a,ranges[0],ranges[1]),flux=.12+.82*voltageN;
+  (d.fluxLines||[]).forEach((l,i)=>{l.material.opacity=.12+flux*(.25+.65*Math.abs(Math.sin(t*2+i*.3)));});
+  (d.secondaryCoils||[]).forEach(c=>c.scale.setScalar(THREE.MathUtils.clamp(.75+ratio*.045,.75,1.55)));
+  if(d.generatorLamp)d.generatorLamp.material.emissiveIntensity=.08+flux*Math.min(1.6,ratio*.18);
+ }
  if(kind==="rc-circuit"){const tau=Math.max(.03,a*b*.001),charge=1-Math.exp(-Math.max(0,t)/tau);(d.rcField||[]).forEach(ar=>ar.setLength(.03+charge*.3,.08,.045));if(d.rcCurrent)d.rcCurrent.position.x=-1.05+((t*1.2)%2.1);if(d.rcPlateA)d.rcPlateA.material.emissiveIntensity=charge*.35;}
  if(kind==="solid-expansion"){const delta=12e-6*Math.max(.1,a)*b,factor=THREE.MathUtils.clamp(1+delta/Math.max(.1,a),.985,1.015);if(d.expansionRod)d.expansionRod.scale.x=2.5*factor;if(d.expansionHeater)d.expansionHeater.material.emissiveIntensity=THREE.MathUtils.clamp(Math.abs(b)/100,.1,1.8);}
  if(kind==="thermal-conduction"){const intensity=THREE.MathUtils.clamp(Math.abs(a*b)/100,.1,2);if(d.thermalRod)d.thermalRod.material.color.setHSL(.56-intensity*.09,.35,.42);(d.heatParticles||[]).forEach((p,i)=>{p.position.x=-1.45+((t*.55+i*.17)%2.9);p.material.emissiveIntensity=.25+intensity*.3;});}
@@ -523,9 +676,9 @@ function updateModel(kind,d,s,t,dt,meta={}){
   (d.photoBeams||[]).forEach((beam,i)=>{beam.material.opacity=emits?.85:.2;});
  }
  if(kind==="xray"){
-  const voltage=THREE.MathUtils.clamp(a,1,200),phase=(t%2.8)/2.8;
+  const voltage=THREE.MathUtils.clamp(a,1,200),phase=(t%2.8)/2.8,rate=.45+norm(b,ranges[3],ranges[4])*2.2;
   if(d.xrayElectron)d.xrayElectron.position.set(-1.05+phase*1.65,.04+Math.sin(phase*Math.PI)*.05,.12);
-  (d.xrayPhotons||[]).forEach((beam,i)=>{beam.material.opacity=phase>.55?.9:0;});
+  (d.xrayPhotons||[]).forEach((beam,i)=>{beam.material.opacity=phase>.55?.25+.65*rate/2.65:0;});
   if(d.xrayTarget)d.xrayTarget.material.emissiveIntensity=.04+voltage/200*1.2;
  }
  if(kind==="quantum-interference"){

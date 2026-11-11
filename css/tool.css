@@ -56,3 +56,9 @@
 .tool-graph canvas{height:170px!important}
 @media(max-width:1000px){.tool-layout{grid-template-columns:minmax(0,1.3fr) minmax(275px,.9fr)}.tool-stage{height:430px}}
 @media(max-width:760px){.tool-layout{grid-template-columns:1fr}.tool-stage{height:390px;min-height:350px}.tool-graph-top{align-items:flex-start;flex-direction:column}.graph-axis-switch{width:100%}.graph-axis-switch button{flex:1}.reading-row{grid-template-columns:1fr 1fr 1fr auto}.tool-side{display:grid;grid-template-columns:1fr}.quick-test{margin-top:11px}.tool-graph canvas{height:155px!important}}
+
+/* Refined numeric typography and context-aware Hz sound status */
+.sound-hint{display:inline-block;max-width:min(42vw,390px);color:#91b8dc;font-size:8px;line-height:1.35;white-space:normal;overflow-wrap:anywhere;text-align:right;padding:0 4px;font-variant-numeric:tabular-nums}
+.tool-metric strong,.tool-control-row output,.tool-range-labels,.tool-result b,.tool-equation{font-variant-numeric:tabular-nums lining-nums}
+.tool-equation,.tool-info,.tool-control-row label,.tool-hero p{font-family:system-ui,'Noto Sans Sinhala','Noto Sans Symbols 2',sans-serif}
+@media(max-width:760px){.sound-hint{order:10;flex-basis:100%;max-width:100%;text-align:right;font-size:7px}.tool-wrap>.topbar .top-actions{gap:5px}}

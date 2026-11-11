@@ -1,0 +1,48 @@
+PHY TOOLS – TEST SITE REFINEMENTS (2026-11-11)
+
+මෙම update එක දැනටමත් ඇති PHY-tools-test repository එක සඳහා පමණි. Original repository එකට deploy නොකරන්න.
+
+1. සංඛ්‍යාත සංදර්ශනය: ඉතා විශාල/කුඩා අගයන් 1.23 × 10²² ආකාරයේ superscript scientific notation ලෙස පෙන්වයි. සමීකරණවල ^2 වැනි numeric powers ද superscript කරයි.
+2. Slider-to-3D: සෑම apparatus එකකම A/B live 3D indicator meters එකතු කර ඇත. අමතරව projectile angle/speed, gravity mass/orbit, circuit power/resistance, semiconductor input, solids load/size, fluid level/flow, Doppler frequency/speed, rectifier amplitude/frequency, induction turns/flux rate, capacitor voltage/gap, transformer voltage/turn ratio, atomic orbit inputs වැනි tool-specific visuals sliders අනුව වෙනස් වේ.
+3. First page: dark background එකේ tool titles සුදු පැහැයෙන් පෙන්වයි.
+4. Sound: controls වලට වෙන්වූ button/action sound signatures ඇත. Frequency/Hz tools වල Sound On කළ විට physical frequency ඇසෙන පරාසය තුළ තිබේ නම් එයම play කරයි. 20 Hz ට අඩු හෝ 20 kHz ට වැඩි සංඛ්‍යාත octave-shift කර ඇසෙන pitch එකකට map කරයි. UI එකේ physical Hz සහ audible representation දෙකම දක්වයි. Beats tool එකේ frequencies දෙකක් oscillator දෙකකින් play කරයි; Doppler tool එක received frequency අනුව play කරයි.
+5. Boyle’s Law original standalone HTML file එකේ simulation logic වෙනස් කර නැත.
+
+VALIDATION
+- catalog tool count: 130
+- category count: 10
+- JavaScript syntax checks: node --check (all JS files)
+- catalog JSON parse: passed
+- HTML required UI element checks: passed
+- ZIP integrity: checked after packaging
+
+LIMITATIONS
+- Browser WebGL/real-time audio rendering could not be tested in this offline build environment. Test the test-site deployment in Chrome before updating the main repository.
+- Frequencies below 20 Hz and above 20,000 Hz are not directly audible to human hearing; the site uses octave transposition and labels it as an audible representation, not the real physical pitch.
+- Some visual behaviours are educational visualisations, not laboratory-grade physical simulations.
+
+අමතර වෙනස්කම් – 2026-11-11
+
+6. Slider → 3D ප්‍රතිචාරය: A/B slider දෙක වෙනස් කරන විට අදාළ 3D apparatus එකේ live parameter meters වෙනස් වේ. Model-specific ප්‍රතිචාර තවදුරටත් නිවැරදි කර ඇත:
+   - Waves Intro / Wave Parameters: frequency සහ wavelength දෙක අනුව wave number හා animation rate වෙනස් වේ.
+   - Sound Waves / Radio Waves: frequency සහ wave speed අනුව wavelength representation වෙනස් වේ.
+   - Wave on a String: tension / linear mass density වලින් v = √(T/μ) අනුව wave animation rate වෙනස් වේ.
+   - Spring Oscillations: mass හා spring constant අනුව ω = √(k/m) වෙනස් වේ.
+   - Damped Oscillation: damping coefficient හා time අනුව amplitude envelope අඩු වේ.
+   - Forced Oscillation / Resonance: driving frequency හා natural frequency අතර අනුපාතය අනුව displacement amplitude වෙනස් වේ.
+   - Torque / Rotational Dynamics / Moment of Inertia / Angular Momentum: අදාළ torque, angular acceleration, radius/mass scale සහ angular velocity අනුව disk/handle භ්‍රමණය හා හැඩය වෙනස් වේ. Disk එකේ rotation axis එක නිවැරදි කර ඇත.
+7. Frequency audio: 20 Hz–20 kHz අතර අගයන් නියමිත frequency එකෙන් play වේ. ඉන් පිටත අගයන් octave shift කර ඇසෙන representation එකක් ලෙස play කර, එය UI එකේ පැහැදිලිව label කරයි. Beats/forced/resonance සඳහා frequency pairs දෙකක් භාවිත කරයි. Doppler tool එකේ received frequency භාවිත කරයි.
+8. UI sounds: slider A/B, play, pause, reset, camera, zoom, fullscreen, language, sound toggle, graph axis, readings, presets, speed selection යන ක්‍රියා සඳහා වෙනස් tone patterns ඇත.
+9. Homepage card titles: dark theme එකේ white/high-contrast ලෙස වෙනස් කර ඇත.
+10. Scientific notation: ඉතා විශාල/කුඩා අගයන් ×10 superscript notation එකෙන් පෙන්වයි; units සහ formula text වල ^n power notation ද superscript කරයි.
+
+අමතර QA:
+- All JavaScript files: node --check passed.
+- Catalog JSON: 130 unique tools / 10 units; each tool has ranges/defaults/visual type.
+- Visual types: 52 types present in model construction logic.
+- HTML local script/style references: no missing local references found in top-level pages.
+- Boyle standalone file `boyles-with-sound.html`: byte-for-byte identical to the baseline in the previous test package.
+
+සීමාවන් (නැවත අවධාරණය):
+- Browser/WebGL rendering සහ real-time WebAudio sound output සජීවී Chrome එකකින් මෙම build environment තුළ තහවුරු කර නැත.
+- Slider-to-3D සම්බන්ධතාව සඳහා common live indicators සියලු apparatus වල ඇත; tool-specific behaviours අදාළ model types වලට ක්‍රියාත්මක කර ඇත. මෙය සෑම tool එකක්ම laboratory-grade physical simulation එකක් බවට සහතිකයක් නොවේ.

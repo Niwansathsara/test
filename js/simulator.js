@@ -30,11 +30,19 @@ const ui = {
 };
 
 function n(v) { return Number.isFinite(v) ? v : 0; }
+const SUPER_DIGITS = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻','+':'⁺'};
+function superscriptExponent(value) { return String(value).split('').map(ch => SUPER_DIGITS[ch] || ch).join(''); }
+function formatPowers(text) {
+  return String(text ?? '').replace(/\^(-?\d+)(?![\w])/g, (_, exponent) => superscriptExponent(exponent));
+}
 function fmt(v) {
-  if (typeof v === 'string') return v;
+  if (typeof v === 'string') return formatPowers(v);
   if (!Number.isFinite(v)) return '—';
   const x = Math.abs(v);
-  if ((x >= 1e5) || (x > 0 && x < 1e-3)) return v.toExponential(3);
+  if ((x >= 1e5) || (x > 0 && x < 1e-3)) {
+    const [mantissa, exponent] = v.toExponential(3).split('e');
+    return `${Number(mantissa)} × 10${superscriptExponent(Number(exponent))}`;
+  }
   return String(Number(v.toPrecision(5)));
 }
 function value(a, b) {
@@ -159,18 +167,115 @@ function displayValue(a,b) {
   return fmt(value(a,b));
 }
 function unitResult() { return lang==='si' ? (data.resultUnitSi || data.resultUnit || 'SI') : (data.resultUnit || 'SI'); }
-function playTone(freq=440, duration=.07, type='sine') {
+let frequencyVoices = [];
+let lastUiSound = Object.create(null);
+function playTone(freq=440, duration=.07, type='sine', offset=0, volume=.035) {
   if (!soundEnabled) return;
   try {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     audioContext ||= new AC();
     if (audioContext.state === 'suspended') audioContext.resume();
-    const osc=audioContext.createOscillator(), gain=audioContext.createGain(), now=audioContext.currentTime;
-    osc.type=type; osc.frequency.setValueAtTime(Math.max(90,Math.min(1200,freq)),now);
-    gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.045,now+.012);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
-    osc.connect(gain);gain.connect(audioContext.destination);osc.start(now);osc.stop(now+duration+.02);
+    const osc=audioContext.createOscillator(), gain=audioContext.createGain();
+    const now=audioContext.currentTime+Math.max(0,offset);
+    osc.type=type; osc.frequency.setValueAtTime(Math.max(60,Math.min(1800,freq)),now);
+    gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(volume,now+.012);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
+    osc.connect(gain);gain.connect(audioContext.destination);osc.start(now);osc.stop(now+duration+.025);
   } catch (e) { console.warn('Audio is not available in this browser',e); }
+}
+const UI_SOUNDS = {
+  sliderA:[[285,.035,'sine']], sliderB:[[430,.04,'triangle']],
+  play:[[660,.055,'triangle'],[880,.085,'sine']], pause:[[330,.09,'triangle']],
+  reset:[[720,.055,'triangle'],[520,.055,'triangle',.07],[360,.10,'sine',.14]],
+  view:[[540,.05,'sine']], soundOn:[[620,.05,'sine'],[830,.09,'sine',.07]], soundOff:[[390,.06,'triangle'],[250,.08,'sine',.07]],
+  cameraLeft:[[360,.04,'sine']], cameraRight:[[470,.04,'sine']], cameraUp:[[610,.055,'triangle']], cameraDown:[[290,.055,'triangle']],
+  zoomIn:[[760,.05,'sine']], zoomOut:[[240,.07,'sine']], cameraHome:[[430,.05,'triangle'],[650,.07,'sine',.07]],
+  fullscreen:[[780,.07,'sine']], language:[[520,.05,'triangle'],[700,.07,'sine',.07]],
+  record:[[920,.08,'sine']], clear:[[230,.06,'triangle'],[310,.08,'sine',.07]], remove:[[260,.045,'triangle']],
+  graphA:[[420,.05,'sine']], graphB:[[570,.05,'triangle']],
+  presetLow:[[250,.07,'sine']], presetDefault:[[490,.07,'triangle']], presetHigh:[[820,.07,'sine']],
+  nudgeAMinus:[[230,.04,'triangle']], nudgeAPlus:[[350,.04,'sine']], nudgeBMinus:[[470,.04,'triangle']], nudgeBPlus:[[620,.04,'sine']],
+  speedHalf:[[300,.05,'triangle']], speedNormal:[[500,.05,'sine']], speedDouble:[[820,.05,'sawtooth']]
+};
+function playUISound(action, throttle=false) {
+  if (!soundEnabled) return;
+  const now=performance.now();
+  if (throttle && now-(lastUiSound[action]||0)<105) return;
+  lastUiSound[action]=now;
+  const pattern=UI_SOUNDS[action] || UI_SOUNDS.view;
+  pattern.forEach(([f,d,type,offset=0])=>playTone(f,d,type,offset,.026));
+}
+function scaledFrequency(rawHz) {
+  let hz=Number(rawHz);
+  if (!Number.isFinite(hz) || hz<=0) return null;
+  if (hz>=20 && hz<=20000) return {hz,shift:0};
+  let shifted=hz, octaves=0;
+  while (shifted<220 && octaves<64) { shifted*=2; octaves++; }
+  while (shifted>880 && octaves>-64) { shifted/=2; octaves--; }
+  return {hz:shifted,shift:octaves};
+}
+function frequencySpec() {
+  const id=String(data.id||'').toLowerCase();
+  const aLabel=String(data.aLabel||'').toLowerCase(), bLabel=String(data.bLabel||'').toLowerCase();
+  const aUnit=String(data.aUnit||'').toLowerCase(), bUnit=String(data.bUnit||'').toLowerCase();
+  const aIsFreq=/hz/.test(aUnit)||/frequency|freq/.test(aLabel);
+  const bIsFreq=/hz/.test(bUnit)||/frequency|freq/.test(bLabel);
+  const scaleFor=unit=>(/10\s*[¹1]4|10\^14|10¹⁴/.test(unit)?1e14:1);
+  if ((id.includes('beats') || id.includes('forced-oscillation') || id.includes('resonance')) && aIsFreq && bIsFreq) return {hz:[state.a,state.b],label:id.includes('beats')?'beats':'frequency-pair'};
+  if (id.includes('doppler') && aIsFreq) {
+    const source=state.a*scaleFor(aUnit), speed=Math.max(-100,Math.min(100,state.b));
+    return {hz:[source*343/Math.max(1,343-speed)],label:'doppler',source,velocity:speed};
+  }
+  if (aIsFreq) return {hz:[state.a*scaleFor(aUnit)],label:'frequency'};
+  if (bIsFreq) return {hz:[state.b*scaleFor(bUnit)],label:'frequency'};
+  return null;
+}
+function stopFrequencyVoices() {
+  if (!audioContext || !frequencyVoices.length) return;
+  const now=audioContext.currentTime;
+  for (const voice of frequencyVoices) {
+    try { voice.gain.gain.cancelScheduledValues(now);voice.gain.gain.setTargetAtTime(.0001,now,.025);voice.osc.stop(now+.12); } catch(_) {}
+  }
+  frequencyVoices=[];
+}
+function updateFrequencyAudio() {
+  const hint=$('soundHint'), spec=frequencySpec();
+  if (!spec) {
+    stopFrequencyVoices();
+    if (hint) hint.textContent = soundEnabled ? (lang==='si'?'මෙම මෙවලමට Hz ශ්‍රව්‍ය සංඥාවක් නොමැත; පාලක ශබ්ද භාවිත වේ.':'This tool has no frequency audio; control sounds remain available.') : '';
+    return;
+  }
+  const audible=spec.hz.map(scaledFrequency);
+  if (hint) {
+    const physical=spec.hz.map(v=>`${fmt(v)} Hz`).join(' + ');
+    const mapped=audible.map(v=>v?`${fmt(v.hz)} Hz`: '—').join(' + ');
+    const shifted=audible.some(v=>v && v.shift!==0);
+    hint.textContent = !soundEnabled
+      ? (lang==='si'?`Hz ශබ්දයට Sound On කරන්න · ${physical}`:`Turn Sound On to hear · ${physical}`)
+      : shifted
+        ? (lang==='si'?`භෞතික සංඛ්‍යාතය: ${physical} · ඇසෙන නිරූපණය: ${mapped} (octave shift)`:`Physical frequency: ${physical} · Audible representation: ${mapped} (octave shifted)`)
+        : (lang==='si'?`ඇසෙන සංඛ්‍යාතය: ${physical}`:`Audible frequency: ${physical}`);
+  }
+  if (!soundEnabled || !running || !audioContext || audioContext.state==='closed') { stopFrequencyVoices(); return; }
+  try {
+    if (audioContext.state==='suspended') audioContext.resume();
+    const count=audible.length;
+    if (frequencyVoices.length!==count) {
+      stopFrequencyVoices();
+      for (let i=0;i<count;i++) {
+        const osc=audioContext.createOscillator(),gain=audioContext.createGain();
+        osc.type='sine';osc.frequency.value=audible[i]?.hz||440;gain.gain.value=.0001;
+        osc.connect(gain);gain.connect(audioContext.destination);osc.start();
+        frequencyVoices.push({osc,gain});
+      }
+    }
+    const now=audioContext.currentTime;
+    frequencyVoices.forEach((voice,i)=>{
+      const hz=audible[i]?.hz||440;
+      voice.osc.frequency.setTargetAtTime(Math.max(20,Math.min(20000,hz)),now,.045);
+      voice.gain.gain.setTargetAtTime(count===2 ? .018 : .026,now,.06);
+    });
+  } catch(error) { console.warn('Frequency audio could not be updated',error); }
 }
 function applyLanguage() {
   const t=ui[lang], set=(id,txt)=>{const el=$(id);if(el)el.textContent=txt;};
@@ -179,30 +284,30 @@ function applyLanguage() {
   const description=lang==='si'?(data.descriptionSi||data.description):data.description;
   document.title=`${title} | PHY tools`;
   set('brandCaption',t.brand);
-  set('toolTitle',title);set('toolSubtitle',description);
+  set('toolTitle',formatPowers(title));set('toolSubtitle',formatPowers(description));
   set('toolEyebrow',lang==='si'?`${data.unitNameSi||data.unitName} · මෙවලම ${String(data.number).padStart(3,'0')}`:`${data.unitName||'A/L PHYSICS'} · TOOL ${String(data.number).padStart(3,'0')}`);
   set('modelLabel',t.model);set('controlsLabel',t.controls);set('liveLabel',t.live);set('formulaLabel',t.formula);set('graphLabel',t.graph);set('graphAxisLabel',t.graphAxis);
   set('resetBtn',t.reset);set('playBtn',running?t.pause:t.play);set('viewBtn',t.view);set('fullBtn',t.fullscreen);set('toolExitFull',lang==='si'?'සම්පූර්ණ තිරයෙන් ඉවත් වන්න':'Exit fullscreen');set('stageCaption',t.hint);set('statusLabel',t.status);set('infoLabel',t.info);set('footerLabel',t.footer);if($('sceneFallback')?.hidden)set('sceneFallback',t.unavailable);
   set('backLink','← '+t.back);set('cameraTitle',t.rotation);set('zoomPlus',t.zoomIn);set('zoomMinus',t.zoomOut);set('cameraReset',t.home);
-  set('langBtn',lang==='en'?'සිංහල':'English');set('soundBtn',soundEnabled?t.soundOn:t.soundOff);
+  set('langBtn',lang==='en'?'සිංහල':'English');set('soundBtn',soundEnabled?t.soundOn:t.soundOff);if($('soundHint'))$('soundHint').textContent='';
   set('legendModel',t.modelLegend);set('legendInteractive',lang==='en'?'3D · Interactive':'ත්‍රිමාණ · අන්තර්ක්‍රියාකාරී');
   set('guideTitle',t.guideTitle);set('howWorksTitle',t.howWorksTitle);set('modelNoteTitle',t.modelNoteTitle);set('presetTitle',t.presetTitle);set('speedTitle',t.speed);
   const guide=$('guideList');if(guide){guide.replaceChildren();(lang==='si'?(data.stepsSi||[]):(data.stepsEn||[])).forEach(x=>{const li=document.createElement('li');li.textContent=x;guide.append(li);});}
-  set('howWorksText',lang==='si'?(data.howItWorksSi||data.descriptionSi||data.description):(data.howItWorksEn||data.description));
-  set('modelNoteText',lang==='si'?(data.modelNoteSi||ui.si.study):(data.modelNoteEn||ui.en.study));
+  set('howWorksText',formatPowers(lang==='si'?(data.howItWorksSi||data.descriptionSi||data.description):(data.howItWorksEn||data.description)));
+  set('modelNoteText',formatPowers(lang==='si'?(data.modelNoteSi||ui.si.study):(data.modelNoteEn||ui.en.study)));
   set('curveLegend',t.curve);set('currentLegend',t.current);set('savedLegend',t.saved);set('graphXAxis',t.graphLabel);set('studyNoteTitle',t.studyTitle);set('studyNoteText',t.study);
   set('presetLow',t.low);set('presetDefault',t.reference);set('presetHigh',t.high);set('recordBtn',t.record);set('clearReadingsBtn',t.clear);set('graphAButton',t.graphA);set('graphBButton',t.graphB);
   set('readingCount',`${savedReadings.length} ${t.savedCount}`);
   set('metricALabel',lang==='si'?(data.aLabelSi||data.aLabel):(data.aLabel||'Parameter A'));
   set('metricBLabel',lang==='si'?(data.bLabelSi||data.bLabel):(data.bLabel||'Parameter B'));
   set('metricResultLabel',lang==='si'?(data.resultLabelSi||t.result):(data.resultLabel||t.result));
-  set('metricAUnit',data.aUnit||'SI');set('metricBUnit',data.bUnit||'SI');set('metricResultUnit',lang==='si'?(data.resultUnitSi||data.resultUnit||'SI'):(data.resultUnit||'SI'));
-  set('equation',lang==='si'?(data.formulaSi||data.formula):data.formula);
-  set('equationSub',description);
+  set('metricAUnit',formatPowers(data.aUnit||'SI'));set('metricBUnit',formatPowers(data.bUnit||'SI'));set('metricResultUnit',formatPowers(lang==='si'?(data.resultUnitSi||data.resultUnit||'SI'):(data.resultUnit||'SI')));
+  set('equation',formatPowers(lang==='si'?(data.formulaSi||data.formula):data.formula));
+  set('equationSub',formatPowers(description));
   const customObserve=lang==='si'?(data.observeSi||''):(data.observeEn||'');
-  set('infoText',customObserve||(lang==='si'
+  set('infoText',formatPowers(customObserve||(lang==='si'
     ?`${data.titleSi||data.title} සඳහා ${data.aLabelSi||'පළමු පරාමිතිය'} සහ ${data.bLabelSi||'දෙවන පරාමිතිය'} වෙනස් කර ${data.formulaSi||data.formula} අනුව ලැබෙන ප්‍රතිඵලය නිරීක්ෂණය කරන්න.`
-    :`For ${data.title}, vary ${data.aLabel||'Parameter A'} and ${data.bLabel||'Parameter B'}. Observe the model and compare the result with ${data.formula||'the stated relationship'}.`));
+    :`For ${data.title}, vary ${data.aLabel||'Parameter A'} and ${data.bLabel||'Parameter B'}. Observe the model and compare the result with ${data.formula||'the stated relationship'}.`)));
 }
 function setupControls() {
   const specs=[
@@ -212,10 +317,10 @@ function setupControls() {
   $('controlMount').innerHTML='';
   specs.forEach((s)=>{
     const wrap=document.createElement('div');wrap.className='tool-control';
-    wrap.innerHTML=`<div class="tool-control-row"><label id="label-${s.id}" for="range-${s.id}"></label><output id="read-${s.id}">${fmt(s.value)} ${s.unit}</output></div><input class="tool-range" id="range-${s.id}" type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.value}"><div class="tool-range-labels"><span>${fmt(s.min)} ${s.unit}</span><span>${fmt(s.max)} ${s.unit}</span></div>`;
+    wrap.innerHTML=`<div class="tool-control-row"><label id="label-${s.id}" for="range-${s.id}"></label><output id="read-${s.id}">${fmt(s.value)} ${formatPowers(s.unit)}</output></div><input class="tool-range" id="range-${s.id}" type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.value}"><div class="tool-range-labels"><span>${fmt(s.min)} ${formatPowers(s.unit)}</span><span>${fmt(s.max)} ${formatPowers(s.unit)}</span></div>`;
     $('controlMount').append(wrap);
     $(`range-${s.id}`).addEventListener('input',e=>{
-      const v=Number(e.target.value);state[s.id]=v;$(`read-${s.id}`).textContent=`${fmt(v)} ${s.unit}`;document.querySelectorAll('[data-preset]').forEach(x=>x.classList.remove('active'));refresh();playTone(260+Math.min(760,Math.abs(v)*12),.045,'sine');
+      const v=Number(e.target.value);state[s.id]=v;$(`read-${s.id}`).textContent=`${fmt(v)} ${formatPowers(s.unit)}`;document.querySelectorAll('[data-preset]').forEach(x=>x.classList.remove('active'));refresh();playUISound(s.id==='a'?'sliderA':'sliderB',true);
     });
   });
   applyControlLanguage();
@@ -245,7 +350,7 @@ function refresh() {
   $('metricA').textContent=fmt(state.a);$('metricB').textContent=fmt(state.b);$('metricResult').textContent=raw;
   $('resultValue').textContent=typeof raw==='string'&&raw.includes('=')?raw:`${raw} ${unitResult()}`;
   $('resultLabel').textContent=lang==='si'?(data.resultLabelSi||ui.si.result):(data.resultLabel||ui.en.result);
-  updateMeters();drawGraph();
+  updateMeters();drawGraph();updateFrequencyAudio();
 }
 function drawGraph(){
   const c=$('toolChart'),ctx=c?.getContext?.('2d');if(!ctx)return;
@@ -282,14 +387,14 @@ function renderReadings(){
     const a=document.createElement('span');a.textContent=`${lang==='si'?(data.aLabelSi||'A'):(data.aLabel||'A')}: ${fmt(q.a)}`;
     const b=document.createElement('span');b.textContent=`${lang==='si'?(data.bLabelSi||'B'):(data.bLabel||'B')}: ${fmt(q.b)}`;
     const result=document.createElement('strong');result.textContent=fmt(q.result);
-    const remove=document.createElement('button');remove.type='button';remove.textContent='×';remove.title=lang==='si'?'මෙම අගය ඉවත් කරන්න':'Remove this reading';remove.addEventListener('click',()=>{savedReadings.splice(index,1);renderReadings();drawGraph();});
+    const remove=document.createElement('button');remove.type='button';remove.textContent='×';remove.title=lang==='si'?'මෙම අගය ඉවත් කරන්න':'Remove this reading';remove.addEventListener('click',()=>{savedReadings.splice(index,1);renderReadings();drawGraph();playUISound('remove');});
     row.append(a,b,result,remove);mount.append(row);
   });
   drawGraph();
 }
 function setStateAndControls(next){
   state={...state,...next};
-  for(const k of ['a','b']){const range=$(`range-${k}`),read=$(`read-${k}`);if(range)range.value=String(state[k]);if(read)read.textContent=`${fmt(state[k])} ${k==='a'?(data.aUnit||''):(data.bUnit||'')}`;}
+  for(const k of ['a','b']){const range=$(`range-${k}`),read=$(`read-${k}`);if(range)range.value=String(state[k]);if(read)read.textContent=`${fmt(state[k])} ${formatPowers(k==='a'?(data.aUnit||''):(data.bUnit||''))}`;}
   document.querySelectorAll('[data-preset]').forEach(x=>x.classList.toggle('active',x.dataset.preset==='default'&&Number(state.a)===Number(D[0])&&Number(state.b)===Number(D[1])));
   refresh();
 }
@@ -359,37 +464,37 @@ $('resetBtn').addEventListener('click',()=>{
   simulation?.setState({...state,running,speed:animationSpeed});
   $('playBtn').textContent=ui[lang].pause;
   document.querySelectorAll('[data-speed]').forEach(x=>x.classList.toggle('active',Number(x.dataset.speed)===1));
-  setStateAndControls(state);playTone(440,.09,'triangle');
+  setStateAndControls(state);playUISound('reset');
 });
-$('playBtn').addEventListener('click',()=>{running=simulation?.toggle()??!running;$('playBtn').textContent=running?ui[lang].pause:ui[lang].play;playTone(running?660:330,.09,'triangle');});
-$('viewBtn').addEventListener('click',()=>{$('cameraPad').classList.toggle('open');$('viewBtn').classList.toggle('active');playTone(520,.045);});
+$('playBtn').addEventListener('click',()=>{running=simulation?.toggle()??!running;$('playBtn').textContent=running?ui[lang].pause:ui[lang].play;updateFrequencyAudio();playUISound(running?'play':'pause');});
+$('viewBtn').addEventListener('click',()=>{$('cameraPad').classList.toggle('open');$('viewBtn').classList.toggle('active');playUISound('view');});
 $('soundBtn').addEventListener('click',async()=>{
-  soundEnabled=!soundEnabled;
-  if(soundEnabled){const AC=window.AudioContext||window.webkitAudioContext;if(AC){audioContext ||= new AC();try{await audioContext.resume();}catch(_){} playTone(720,.12,'sine');}else soundEnabled=false;}
-  $('soundBtn').textContent=soundEnabled?ui[lang].soundOn:ui[lang].soundOff;$('soundBtn').setAttribute('aria-pressed',String(soundEnabled));
+  if(soundEnabled){playUISound('soundOff');soundEnabled=false;stopFrequencyVoices();}
+  else {const AC=window.AudioContext||window.webkitAudioContext;if(AC){audioContext ||= new AC();try{await audioContext.resume();}catch(_){}soundEnabled=true;playUISound('soundOn');}else soundEnabled=false;}
+  $('soundBtn').textContent=soundEnabled?ui[lang].soundOn:ui[lang].soundOff;$('soundBtn').setAttribute('aria-pressed',String(soundEnabled));updateFrequencyAudio();
 });
-document.querySelectorAll('[data-cam]').forEach(b=>b.addEventListener('click',()=>{if(!simulation)return;const v=b.dataset.cam;if(v==='left')simulation.rotate(-.22,0);if(v==='right')simulation.rotate(.22,0);if(v==='up')simulation.rotate(0,-.17);if(v==='down')simulation.rotate(0,.17);if(v==='in')simulation.zoom(.86);if(v==='out')simulation.zoom(1.16);if(v==='home')simulation.resetView();playTone(480,.04);}));
-$('fullBtn').addEventListener('click',toggleFull);$('toolExitFull').addEventListener('click',toggleFull);
+document.querySelectorAll('[data-cam]').forEach(b=>b.addEventListener('click',()=>{if(!simulation)return;const v=b.dataset.cam;if(v==='left')simulation.rotate(-.22,0);if(v==='right')simulation.rotate(.22,0);if(v==='up')simulation.rotate(0,-.17);if(v==='down')simulation.rotate(0,.17);if(v==='in')simulation.zoom(.86);if(v==='out')simulation.zoom(1.16);if(v==='home')simulation.resetView();playUISound(v==='left'?'cameraLeft':v==='right'?'cameraRight':v==='up'?'cameraUp':v==='down'?'cameraDown':v==='in'?'zoomIn':v==='out'?'zoomOut':'cameraHome');}));
+$('fullBtn').addEventListener('click',()=>{toggleFull();playUISound('fullscreen');});$('toolExitFull').addEventListener('click',()=>{toggleFull();playUISound('fullscreen');});
 document.addEventListener('fullscreenchange',syncFull);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('stage').classList.contains('fallback-fullscreen')){$('stage').classList.remove('fallback-fullscreen');syncFull();}});
-$('langBtn').addEventListener('click',()=>{lang=lang==='en'?'si':'en';try{localStorage.setItem('phy-lang',lang);}catch(_){}applyLanguage();applyControlLanguage();renderReadings();refresh();try{parent.postMessage({type:'phy-language-change',language:lang},'*')}catch(_){} });
+$('langBtn').addEventListener('click',()=>{lang=lang==='en'?'si':'en';try{localStorage.setItem('phy-lang',lang);}catch(_){}applyLanguage();applyControlLanguage();renderReadings();refresh();playUISound('language');try{parent.postMessage({type:'phy-language-change',language:lang},'*')}catch(_){} });
 $('recordBtn').addEventListener('click',()=>{
   savedReadings.push({a:state.a,b:state.b,result:displayValue(state.a,state.b)});
   if(savedReadings.length>MAX_SAVED_READINGS)savedReadings.shift();
-  renderReadings();playTone(760,.07,'sine');
+  renderReadings();playUISound('record');
 });
-$('clearReadingsBtn').addEventListener('click',()=>{savedReadings=[];renderReadings();playTone(300,.06,'triangle');});
-document.querySelectorAll('[data-graph-axis]').forEach(btn=>btn.addEventListener('click',()=>{graphAxis=btn.dataset.graphAxis==='b'?'b':'a';drawGraph();playTone(500,.04);}));
+$('clearReadingsBtn').addEventListener('click',()=>{savedReadings=[];renderReadings();playUISound('clear');});
+document.querySelectorAll('[data-graph-axis]').forEach(btn=>btn.addEventListener('click',()=>{graphAxis=btn.dataset.graphAxis==='b'?'b':'a';drawGraph();playUISound(graphAxis==='a'?'graphA':'graphB');}));
 document.querySelectorAll('[data-preset]').forEach(btn=>btn.addEventListener('click',()=>{
   const preset=btn.dataset.preset;const next=preset==='low'?{a:Number(R[0]),b:Number(R[3])}:preset==='high'?{a:Number(R[1]),b:Number(R[4])}:{a:Number(D[0]),b:Number(D[1])};
-  setStateAndControls(next);document.querySelectorAll('[data-preset]').forEach(x=>x.classList.toggle('active',x===btn));playTone(540,.055,'triangle');
+  setStateAndControls(next);document.querySelectorAll('[data-preset]').forEach(x=>x.classList.toggle('active',x===btn));playUISound(preset==='low'?'presetLow':preset==='high'?'presetHigh':'presetDefault');
 }));
 document.querySelectorAll('[data-nudge]').forEach(btn=>btn.addEventListener('click',()=>{
   const [key,dir]=btn.dataset.nudge.split(':');const off=key==='a'?0:3,step=Number(R[off+2])||.1,min=Number(R[off]),max=Number(R[off+1]);
-  const next={...state,[key]:Math.max(min,Math.min(max,Number((state[key]+Number(dir)*step).toFixed(8))))};setStateAndControls(next);playTone(430,.035);
+  const next={...state,[key]:Math.max(min,Math.min(max,Number((state[key]+Number(dir)*step).toFixed(8))))};setStateAndControls(next);playUISound(key==='a'?(Number(dir)<0?'nudgeAMinus':'nudgeAPlus'):(Number(dir)<0?'nudgeBMinus':'nudgeBPlus'));
 }));
 document.querySelectorAll('[data-speed]').forEach(btn=>btn.addEventListener('click',()=>{
   animationSpeed=Number(btn.dataset.speed)||1;simulation?.setSpeed?.(animationSpeed);simulation?.setState({speed:animationSpeed});
-  document.querySelectorAll('[data-speed]').forEach(x=>x.classList.toggle('active',x===btn));playTone(620,.045);
+  document.querySelectorAll('[data-speed]').forEach(x=>x.classList.toggle('active',x===btn));playUISound(animationSpeed===.5?'speedHalf':animationSpeed===2?'speedDouble':'speedNormal');
 }));
 window.addEventListener('resize',()=>drawGraph());
 $('logoutBtn').hidden=true;
