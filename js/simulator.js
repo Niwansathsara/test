@@ -346,7 +346,7 @@ function updateMeters(){
   // Redundant edge indicator bars were removed; numerical readouts remain the primary feedback.
 }
 function refresh() {
-  if(simulation) simulation.setState({...state,running,speed:animationSpeed});
+  if(simulation) simulation.setState({...state,running,speed:animationSpeed,language:lang});
   const raw=displayValue(state.a,state.b,state.c);
   $('metricA').textContent=fmt(state.a);$('metricB').textContent=fmt(state.b);$('metricResult').textContent=raw;
   $('resultValue').textContent=typeof raw==='string'&&raw.includes('=')?raw:`${raw} ${unitResult()}`;
@@ -455,7 +455,7 @@ $('scene').addEventListener('webglcontextlost', event => {
 });
 try {
   const { createPhysicsScene } = await import('./physics-engine.js');
-  simulation = createPhysicsScene($('scene'), data, state);
+  simulation = createPhysicsScene($('scene'), data, {...state, language:lang, running, speed:animationSpeed});
 } catch(error) {
   showSceneError(error);
 }
@@ -464,7 +464,7 @@ $('resetBtn').addEventListener('click',()=>{
   state={a:Number(D[0]),b:Number(D[1]),...(data.cLabel?{c:Number(D[2]??90)}:{})};running=true;animationSpeed=1;
   if(simulation?.reset)simulation.reset();
   simulation?.resetView?.();
-  simulation?.setState({...state,running,speed:animationSpeed});
+  simulation?.setState({...state,running,speed:animationSpeed,language:lang});
   $('playBtn').textContent=ui[lang].pause;
   document.querySelectorAll('[data-speed]').forEach(x=>x.classList.toggle('active',Number(x.dataset.speed)===1));
   setStateAndControls(state);playUISound('reset');
@@ -496,7 +496,7 @@ document.querySelectorAll('[data-nudge]').forEach(btn=>btn.addEventListener('cli
   const next={...state,[key]:Math.max(min,Math.min(max,Number((state[key]+Number(dir)*step).toFixed(8))))};setStateAndControls(next);playUISound(key==='a'?(Number(dir)<0?'nudgeAMinus':'nudgeAPlus'):key==='b'?(Number(dir)<0?'nudgeBMinus':'nudgeBPlus'):'sliderC');
 }));
 document.querySelectorAll('[data-speed]').forEach(btn=>btn.addEventListener('click',()=>{
-  animationSpeed=Number(btn.dataset.speed)||1;simulation?.setSpeed?.(animationSpeed);simulation?.setState({speed:animationSpeed});
+  animationSpeed=Number(btn.dataset.speed)||1;simulation?.setSpeed?.(animationSpeed);simulation?.setState({speed:animationSpeed,language:lang});
   document.querySelectorAll('[data-speed]').forEach(x=>x.classList.toggle('active',x===btn));playUISound(animationSpeed===.5?'speedHalf':animationSpeed===2?'speedDouble':'speedNormal');
 }));
 window.addEventListener('resize',()=>drawGraph());

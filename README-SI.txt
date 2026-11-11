@@ -1,52 +1,64 @@
-PHY TOOLS — TEST PACKAGE උපදෙස්
-===============================
+PHY TOOLS — SUPER ADVANCED FULL WEBSITE PACKAGE
+================================================
 
-මෙම ZIP එක TEST repository එකට පමණක් upload කරන්න. දැනට වැඩ කරන original/live repository එකට තවම upload කරන්න එපා.
+මෙම ZIP එක සම්පූර්ණ website package එකකි. මෙය පළමුව TEST repository එකට පමණක් upload කරන්න. Original/live PHY-tools repository එකට තවම upload කරන්න එපා.
 
-මෙම සංස්කරණයේ ප්‍රධාන වෙනස්කම්
---------------------------------
-1. සාමාන්‍ය simulator වල Three.js WebGL renderer එක Boyle's Law හි ක්‍රියාත්මක renderer settings වලට සමාන කර ඇත. Antialiasing context එක සකස් කළ නොහැකි නම් අඩු resource භාවිත කරන renderer එකකින් නැවත උත්සාහ කරයි.
-2. 3D model එක ආරම්භ නොවුණොත් දැන් generic message එකක් පමණක් නොව browser එකෙන් ලැබුණු සැබෑ error name/message එකත් පෙන්වයි.
-3. Energy Forms and Changes tool එකේ වැරදි gas piston model එක වෙනුවට beaker/calorimeter, water, heater, thermometer සහ heat indicators ඇති thermal model එකක් යොදා ඇත.
-4. Gas-law simulations වල piston සහ gas-particle model එක තවදුරටත් වෙනම පවතී.
-5. Simulator page එකේ equation, graph, result, input controls, pause/reset, camera, fullscreen, sound, What to observe, Study note සහ අලුත් How to investigate උපදෙස් ඇතුළත්ය.
-6. How to investigate සහ 3D error details English/Sinhala භාෂා දෙකෙන්ම පෙන්වයි.
-7. Main, category, simulator, admin සහ Boyle pages වල PHY logo scroll කරන විටත් පෙනෙන ලෙස header එක sticky කර ඇත. 404/About pages වලත් PHY favicon යොදා ඇත.
+ප්‍රධාන අන්තර්ගතය
+------------------
+• index.html — ප්‍රධාන පිටුව, syllabus units සහ tool catalogue
+• tools.html — තෝරාගත් syllabus unit එකේ tools
+• simulate.html — වෙනම simulator page template එක; tool ID එක අනුව data/catalog.json වෙතින් data ලබාගනී
+• boyles-with-sound.html — Boyle's Law සඳහා වෙනම 3D laboratory simulator
+• admin.html / js/admin.js — admin controls
+• about.html / 404.html — අනෙකුත් website pages
+• data/catalog.json — tools 130 සහ syllabus units 10 සඳහා metadata/calculation definitions
+• js/physics-engine.js — Three.js 3D scene, physics models, animation loop සහ camera controls
+• js/advanced-apparatus.js — 52 visual families සඳහා අමතර laboratory apparatus, calibrated fittings, instruments සහ dynamic live display
+• js/simulator.js / js/simulator-loader.js — simulator controls, calculations, graphs, audio, language සහ loading
+• css/ — responsive site සහ simulator design
+• firebase/ සහ js/firebase-config.js — Firebase config සහ Firestore rules
 
-TEST REPOSITORY එකට upload කරන ආකාරය
--------------------------------------
-1. ZIP එක Extract කරන්න.
-2. Extract කළ folder එකේ ඇතුළත සියලු files සහ folders select කරන්න.
-3. PHY-tools-test repository එකේ root එකට upload කර පරණ package files replace කරන්න.
-4. index.html, tools.html, simulate.html, boyles-with-sound.html, js/, css/, data/, firebase/ ඇතුළු package එකේ files සියල්ලම upload විය යුතුය.
-5. Commit changes කරන්න.
-6. GitHub Pages: Deploy from a branch → main → /(root).
-7. Test site එක Ctrl+F5 සමඟ නැවත load කරන්න.
+3D upgrade එකේ ස්වභාවය
+-----------------------
+1. Catalog එකේ tools 130ක් සහ syllabus units 10ක් ඇත.
+2. ඒවා visualType පදනම් වූ විශේෂිත 3D model families 52කට බෙදා ඇත. එක් එක් tool එක එයට අදාළ family model එක සහ tool-specific update logic භාවිත කරයි; 130ම වෙන වෙනම 130 bespoke CAD files නොවේ.
+3. Advanced apparatus layer එක family අනුව laboratory stands, optical/motion rails, calibrated scales, bearings, pendulum fixtures, wave drivers, gas/thermal instruments, fluid gauges, electrical/electronic benches, nuclear/optical detector fixtures වැනි කොටස් එක් කරයි.
+4. Tool එකේ input labels, units සහ title අනුව live instrument panel එක පෙන්වයි. Sinhala/English මාරු කළ විට panel text ද වෙනස් වේ.
+5. Original physics model update loop එක සහ slider inputs පවත්වා ගනී; advanced layer එක ඒ 3D model එක වටා instrument/appartus visuals සහ live indicators එක් කරයි.
+6. Model framing, lighting, shadows, camera controls, responsive resize සහ disposal logic ඇතුළත් වේ.
+7. Three.js external CDN එකකින් load වේ. GitHub Pages වෙතින් 3D සඳහා අන්තර්ජාල සම්බන්ධතාව සහ WebGL සහිත නවීන browser එකක් අවශ්‍ය වේ.
 
-පළමුව පරීක්ෂා කළ යුතු දේ
--------------------------
-A. Energy Forms and Changes — දැන් beaker, heater, thermometer දෘශ්‍යමාන විය යුතුය.
-B. Gas Laws යටතේ Boyle/Charles/Ideal Gas tools — piston හා particles පෙන්විය යුතුය.
-C. Play/Pause, Reset, sliders, camera rotate/zoom, fullscreen සහ sound.
-D. Sinhala/English මාරු කිරීම.
-E. Scroll කළ විට PHY logo/header පෙනී තිබීම.
-F. Boyle's Law — පරණ ක්‍රියාකාරී 3D simulation එක වෙනස් වී නැතිදැයි බලන්න.
+Boyle's Law
+-----------
+Boyle's Law හි වත්මන් standalone 3D page එක මෙම update එකේදී වෙනස් කර නැත. එහි piston, gas molecules, volume/temperature sliders (100–1000 K; default 800 K), pressure/volume/PV readouts, live P–V graph, sound, camera සහ English/Sinhala UI පවතී. Baseline package එකේ boyles-with-sound.html සමඟ byte-level compare එකේ වෙනසක් නොමැති බව තහවුරු කළා.
 
-තවම 3D model එක load නොවුණොත්
+පරීක්ෂණය සහ සීමාවන්
+--------------------
+• catalog JSON parse: සමත්
+• tools: 130
+• syllabus units: 10
+• visual model families: 52
+• catalog visualType coverage: සියල්ල advanced family list එකෙන් ආවරණය වේ
+• JavaScript module/classic syntax checks: සමත්
+• HTML local CSS/JS asset references: සමත්
+• Boyle's Law standalone page: baseline එකට සමානයි
+• ZIP integrity: සකස් කිරීමේදී වෙනම unzip test එකක් සිදු කර ඇත
+
+වැදගත්: මෙම පරිසරයෙන් external Three.js CDN සහ live browser WebGL rendering එක 130ම එකින් එක ධාවනය කර තහවුරු කිරීමට නොහැකි විය. එබැවින් මේ package එකේ static/code-level checks සමත් වුවද, සියලු 130 simulation behaviors විද්‍යාත්මකව/ browser එකකින් 100% validate කර ඇතැයි නොකියයි. Test repository එකේ සැබෑ browser testing අනිවාර්යයි. Advanced apparatus visuals යනු අධ්‍යාපනික procedural 3D models වන අතර photorealistic CAD assets නොවේ.
+
+Firebase සම්බන්ධ වැදගත් අවවාදය
 -------------------------------
-දැන් 3D stage එකේම තාක්ෂණික error එක පෙන්වයි. එහි error detail එක copy කර හෝ screenshot එකක් එවන්න. ඒකෙන් WebGL context ද, CDN/module loading ද, Three.js scene initialization ද කියලා වෙන් කර හඳුනාගත හැකියි.
+මෙම package එකේ js/firebase-config.js තවමත් ඔයාගේ දැනට භාවිත කරන phy-tools Firebase project එකට සම්බන්ධයි. ඒ නිසා TEST website එකේ public simulations බලන එක කළ හැකි නමුත් admin panel එකෙන් add/delete/publish වැනි දත්ත වෙනස් කරන පරීක්ෂණ කරන්න එපා; ඒවා shared Firebase database එකට බලපාන්න පුළුවන්. Admin workflow එක වෙන්ව පරීක්ෂා කිරීමට වෙනම Firebase test project එකක් සහ එයට ගැළපෙන config/rules අවශ්‍යයි.
 
-වැදගත් සීමාව
--------------
-මෙම සකස් කිරීමේ පරිසරයෙන් external CDN host එකට සම්බන්ධ විය නොහැකි නිසා GitHub Pages live WebGL render එක browser එකකින් තහවුරු කර නැත. මෙහි JavaScript syntax, catalogue, model type mapping, page structure සහ ZIP integrity පමණක් ස්ථිතිකව පරීක්ෂා කර ඇත. සැබෑ browser test එක TEST repository එකේ කළ යුතුය.
+TEST REPOSITORY එකට upload කිරීම
+--------------------------------
+1. ZIP එක Extract කරන්න.
+2. Extract කළ PHY-Tools-Super-Advanced-Full-Site folder එක open කරන්න.
+3. එහි ඇතුළත files සහ folders සියල්ල select කරන්න; wrapper folder එකම nested folder ලෙස upload කරන්න එපා.
+4. Niwansathsara/test repository එකේ root එකට upload කර මේ package එකේ files replace කරන්න.
+5. Commit changes කරන්න.
+6. GitHub Pages settings දැනටමත් Deploy from a branch → main → /(root) නම් ඒවා වෙනස් කරන්න එපා.
+7. https://niwansathsara.github.io/test/ වෙත ගොස් Ctrl+Shift+R කරන්න.
+8. Boyle's Law සහ visual families කිහිපයක් (pendulum, projectile, wave, gas, circuit, fluid, optics/atomic) පරීක්ෂා කරන්න.
 
-Tools 130ම catalogue එකේ ඇත. ඒවා topic-oriented shared 3D model families භාවිත කරයි; 130ම වෙන වෙනම bespoke 3D models නොවේ. සියලු භෞතික සූත්‍ර/උපකල්පනත් සම්පූර්ණ syllabus audit එකකින් තහවුරු කර නැත.
-
-
-PHY TOOLS – UNIVERSAL SIMULATOR UPDATE
-=====================================
-මෙම සංස්කරණයේ සෑම simulator පිටුවකටම පාලක, අඩු/මූලික/වැඩි පරීක්ෂණ අගයන්, A-/A+/B-/B+ buttons, Play/Pause, Reset, animation speed, camera controls, Sound On/Off, Fullscreen, live graph, graph axis switch සහ reading capture/clear ඇතුළත් කර ඇත.
-සෑම tool එකකටම එහිම සූත්‍රය, ආදාන, දෘශ්‍ය ආකෘතිය සහ පියවරෙන් පියවර භාවිත උපදෙස් English සහ Sinhala දෙකෙන් එක් කර ඇත.
-Boyle's Law original standalone page එක වෙනස් කර නැත.
-
-පරීක්ෂණයෙන් හඳුනාගත් නිවැරදි කිරීම්: gas-properties හි kPa × L ප්‍රතිඵලය J ලෙස නිවැරදි කිරීම; diode equation හි I0 = 1 pA ලෙස නිවැරදි කිරීම; physics animation engine එකේ input value 0 නම් එය 1 ලෙස වැරදිව සලකන bug එක නිවැරදි කිරීම.
+Original PHY-tools repository එක update නොකරන්න; test site එකේ සියලු වැදගත් කොටස් තහවුරු කළ පසු පමණක් production update එකක් කරන්න.

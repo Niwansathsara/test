@@ -1,0 +1,62 @@
+PHY TOOLS — ADVANCED 3D COVERAGE REPORT
+=======================================
+Tools: 130 | Units: 10 | 3D visual families: 52
+
+Visual family coverage (family : number of tools : example tools)
+- atomic: 4 tools — Build an Atom; Models of the Hydrogen Atom; Hydrogen Atom Simulator
+- blackbody: 1 tools — Blackbody Spectrum Simulator
+- buoyancy: 1 tools — Buoyancy Simulator
+- calorimetry: 1 tools — Specific Heat Simulator
+- capacitor: 2 tools — Capacitor Lab; Capacitor Lab: Basics
+- capillary: 1 tools — Capillary Action Simulator
+- centre-mass: 1 tools — Centre of Mass Simulator
+- charged-particle: 2 tools — Charged Particle in Magnetic Field; Charged Particle Simulator
+- circuit: 9 tools — Circuit Construction Kit: DC; Battery Voltage Simulator; Ohm’s Law Simulator
+- circular-motion: 1 tools — Circular Motion Simulator
+- collision: 2 tools — Collision Lab; Momentum Conservation Simulator
+- doppler: 1 tools — Doppler Effect Simulator
+- electric: 5 tools — Balloons and Static Electricity; Coulomb’s Law Simulator; Charges and Fields
+- energy: 1 tools — Energy Skate Park
+- fluid: 3 tools — Surface Tension Simulator; Viscosity Simulator; Under Pressure
+- forces: 4 tools — Forces and Motion; Friction Simulator; Force Diagram Simulator
+- gas: 6 tools — Gas Properties; Boyle’s Law Simulator; Charles’ Law Simulator
+- gas-state: 1 tools — States of Matter
+- generator: 1 tools — Generator Simulator
+- gravity: 8 tools — Gravity Force Lab; Gravity Field Simulator; Gravitational Potential Simulator
+- hydrostatic: 1 tools — Fluid Pressure and Flow
+- induction: 2 tools — Faraday’s Electromagnetic Lab; Faraday’s Law Simulator
+- logic: 2 tools — Logic Gate Simulator; Logic Simulator
+- magnetic: 4 tools — Magnet and Compass; Magnets and Electromagnets; Magnetic Force Simulator
+- measurement: 4 tools — SI Unit Converter; Significant Figures Calculator; Dimensional Analysis Simulator
+- motion: 3 tools — The Moving Man; Motion Graph Simulator; Relative Motion Simulator
+- nuclear: 7 tools — Alpha Decay Simulator; Beta Decay Simulator; Radioactive Dating Game
+- oscillator: 5 tools — Masses and Springs; Spring Oscillations Simulator; Damped Oscillation Simulator
+- pendulum: 1 tools — Pendulum Lab
+- phase-change: 1 tools — Phase Changes Simulator
+- photoelectric: 1 tools — Photoelectric Effect Simulator
+- pipe-flow: 1 tools — Fluid Flow Simulator
+- projectile: 2 tools — Projectile Motion; Projectile Data Lab
+- quantum-interference: 1 tools — Quantum Wave Interference
+- rc-circuit: 1 tools — RC Circuit Simulator
+- rectifier: 3 tools — Rectifier Circuit Simulator; Half-wave Rectifier Simulator; Full-wave Rectifier Simulator
+- rotation: 3 tools — Rotational Dynamics Simulator; Moment of Inertia Simulator; Angular Momentum Simulator
+- scattering: 1 tools — Rutherford Scattering Simulator
+- semiconductor: 6 tools — Semiconductor Simulator; Intrinsic & Extrinsic Semiconductor Simulator; Diode Simulator
+- solid-expansion: 1 tools — Thermal Expansion Simulator
+- solids: 5 tools — Hooke’s Law Simulator; Stress-Strain Curve Simulator; Elasticity Simulator
+- sound-intensity: 1 tools — Sound Intensity Simulator
+- stokes-drag: 1 tools — Stokes’ Law Simulator
+- terminal-fluid: 1 tools — Terminal Velocity Simulator
+- thermal: 1 tools — Energy Forms and Changes
+- thermal-conduction: 1 tools — Heat Transfer Simulator
+- torque: 2 tools — Balancing Act; Torque Simulator
+- transformer: 1 tools — Transformer Simulator
+- vector: 2 tools — Vector Addition; Vector Resolution
+- wave-special: 4 tools — Wave Interference; Normal Modes Simulator; Beats Simulator
+- waves: 5 tools — Waves Intro; Wave on a String; Sound Waves Simulator
+- xray: 1 tools — X-ray Production Simulator
+
+Advanced apparatus families missing from catalogue: 
+Catalogue visual types missing advanced apparatus: 
+
+Caveat: shared families have tool-specific input/dynamic logic where implemented. They are not 130 separate bespoke CAD models. Validate every simulation in a real browser before production deployment.

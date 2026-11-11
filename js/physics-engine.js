@@ -1,3 +1,4 @@
+import { addAdvancedApparatus, updateAdvancedApparatus } from './advanced-apparatus.js';
 // Load Three.js from independent ESM CDNs. This avoids a fragile import-map
 // dependency on OrbitControls and retries another provider if one CDN returns
 // an invalid response or is blocked on the visitor's network.
@@ -72,6 +73,7 @@ function ring(parent,r,tube,color,pos=[0,0,0],rot=[0,0,0]){const m=mesh(new THRE
 export function createPhysicsScene(canvas,meta,initialState={a:1,b:1}){
  let renderer,scene,camera,controls,raf=0,disposed=false,elapsed=0,last=performance.now(),observer=null;
  const group=new THREE.Group(),dynamic={};
+ let advancedRig=null;
  let state={...initialState,running:true,speed:1};
  const stage=canvas.parentElement||canvas;
  const readStageSize=()=>{
@@ -116,6 +118,10 @@ export function createPhysicsScene(canvas,meta,initialState={a:1,b:1}){
   scene.add(group);
   const visualType=meta.visualType||meta.kind;
   buildModel(visualType,group,dynamic,meta);
+  // Add a purpose-built laboratory apparatus layer for every syllabus tool.
+  // This adds calibrated fixtures, instrument hardware, rigging and a live
+  // readout while preserving each tool's own physical model and calculation.
+  advancedRig=addAdvancedApparatus(THREE,group,dynamic,meta);
   group.updateMatrixWorld(true);
 
   // Centre and fit each model independently. The old fixed camera target put
@@ -163,10 +169,12 @@ export function createPhysicsScene(canvas,meta,initialState={a:1,b:1}){
     const dt=Math.min(.04,(now-last)/1000||.016);last=now;
     if(state.running)elapsed+=dt*(Number.isFinite(Number(state.speed))?THREE.MathUtils.clamp(Number(state.speed),.25,3):1);
     updateModel(visualType,dynamic,state,elapsed,dt,meta);
+    updateAdvancedApparatus(THREE,advancedRig,meta,state,elapsed,dt);
     controls.update();renderer.render(scene,camera);
    } catch(error) {
     disposed=true;cancelAnimationFrame(raf);
     if(observer)observer.disconnect();
+    try{for(const fn of advancedRig?.dispose||[])fn();}catch(_){}
     try{controls?.dispose();}catch(_){}
     try{renderer?.dispose();}catch(_){}
     canvas.dispatchEvent(new CustomEvent('phy-3d-error',{detail:error}));
@@ -190,7 +198,19 @@ export function createPhysicsScene(canvas,meta,initialState={a:1,b:1}){
    reset(){elapsed=0;state.running=true;state.speed=1;return state.running;},
    toggle(){state.running=!state.running;return state.running;},rotate,zoom,
    resetView(){const distance=calcFitDistance(readStageSize().width,readStageSize().height);camera.position.copy(controls.target).addScaledVector(viewDirection,distance);controls.update();},
-   dispose(){disposed=true;cancelAnimationFrame(raf);if(observer)observer.disconnect();else window.removeEventListener('resize',onResize);controls.dispose();renderer.dispose();}
+   dispose(){
+    disposed=true;cancelAnimationFrame(raf);
+    if(observer)observer.disconnect();else window.removeEventListener('resize',onResize);
+    try{for(const fn of advancedRig?.dispose||[])fn();}catch(_){}
+    const geometries=new Set(),materials=new Set(),textures=new Set();
+    group.traverse(obj=>{
+     if(obj.geometry)geometries.add(obj.geometry);
+     const list=Array.isArray(obj.material)?obj.material:(obj.material?[obj.material]:[]);
+     for(const material of list){materials.add(material);for(const key of Object.keys(material)){const value=material[key];if(value?.isTexture)textures.add(value);}}
+    });
+    textures.forEach(x=>x.dispose());geometries.forEach(x=>x.dispose());materials.forEach(x=>x.dispose());
+    controls.dispose();renderer.dispose();
+   }
   };
  }catch(error){
   console.error("3D scene error",error);
